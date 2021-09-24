@@ -1,0 +1,9 @@
+/.cpcache/
+/.calva/
+/.idea/
+/.lsp/
+/.log/
+/.clj-kondo/.cache/*
+.DS_Store
+.dir-locals.el
+.nrepl-port
