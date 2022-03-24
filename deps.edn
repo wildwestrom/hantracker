@@ -1,12 +1,13 @@
-{:paths ["src"]
+{:paths ["src" "resources"]
 
- :deps {
-        seesaw/seesaw {:mvn/version "1.5.0"}}
+ :deps {org.clojure/data.xml     {:mvn/version "0.2.0-alpha6"}
+        tolitius/xml-in          {:mvn/version "0.1.1"}
+        io.replikativ/datahike   {:mvn/version "0.4.1484"}
+        clj-python/libpython-clj {:mvn/version "2.018"}}
 
- :aliases {:uberjar {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.278"}}
+ :aliases {:uberjar {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}
                      :ns-default hf.depstar
                      :exec-fn    uberjar
                      :exec-args  {:main-class core
-                                  :aot        true}}
-           :upgrade {:extra-deps {com.github.liquidz/antq {:mvn/version "0.16.3"}}
-                     :main-opts  ["-m" "antq.core" "--upgrade"]}}}
+                                  :sync-pom   false
+                                  :aot        true}}}}

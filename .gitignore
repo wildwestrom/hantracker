@@ -8,3 +8,5 @@
 .dir-locals.el
 .nrepl-port
 /resources/
+.clj-kondo/
+/classes/
