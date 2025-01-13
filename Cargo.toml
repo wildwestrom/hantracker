@@ -1,0 +1,32 @@
+[workspace]
+resolver = "2"
+members = ["lib"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+authors = ["Christian Westrom <c.westrom@westrom.xyz>"]
+description = "Tracks your progress learning Chinese characters"
+repository = "TBD"
+keywords = ["graphical"]
+categories = []
+
+[package]
+name = "hantracker"
+edition = "2021"
+
+[workspace.dependencies]
+anyhow = "1"
+log = "*"
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+lib = { path = "lib" }
+
+[features]
+default = []
+
+[profile.dev]
+incremental = true

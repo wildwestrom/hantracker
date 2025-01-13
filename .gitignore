@@ -1,12 +1,5 @@
-/.cpcache/
-/.calva/
-/.idea/
-/.lsp/
-/.log/
-/.clj-kondo/.cache/*
 .DS_Store
-.dir-locals.el
-.nrepl-port
 /resources/
-.clj-kondo/
-/classes/
+.direnv
+/target
+.idea
