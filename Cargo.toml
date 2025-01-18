@@ -24,6 +24,8 @@ log = "*"
 anyhow = { workspace = true }
 log = { workspace = true }
 lib = { path = "lib" }
+relm4 = "*"
+gtk-blueprint = { features = ["compiled-map"], git = "https://github.com/wildwestrom/gtk-blueprint" }
 
 [features]
 default = []

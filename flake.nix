@@ -22,7 +22,7 @@
         rust-toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in
       {
-        devShells.default = pkgs.mkShell rec {
+        devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             just
             markdownlint-cli2
@@ -31,17 +31,14 @@
             rust-toolchain
             pkg-config
 
-            openssl # for reqwest
+            # for reqwest
+            openssl
 
-            # graphics
-            wayland
-            wayland-scanner
-            libxkbcommon
-            # libGL
-            # fontconfig
-            # vulkan-loader
+            # GTK
+            gtk4
+            wrapGAppsHook
+            blueprint-compiler
           ];
-          # LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath packages;
         };
       }
     );
