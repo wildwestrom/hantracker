@@ -23,6 +23,28 @@ pub struct Dict2 {
 	character: Vec<Character>,
 }
 
+impl Dict2 {
+	pub fn get_all_jlpt(&self) -> Vec<String> {
+		self.character
+			.iter()
+			.filter(|c| c.misc.jlpt.is_some())
+			.map(|c| c.literal.clone())
+			.collect()
+	}
+	pub fn get_all_joyo(&self) -> Vec<String> {
+		self.character
+			.iter()
+			.filter(|c| {
+				c.misc.grade.is_some_and(|g| match g {
+					1..6 | 8 => true,
+					_ => false,
+				})
+			})
+			.map(|c| c.literal.clone())
+			.collect()
+	}
+}
+
 #[derive(XmlRead, Debug)]
 #[xml(strict(unknown_attribute, unknown_element))]
 #[xml(tag = "header")]

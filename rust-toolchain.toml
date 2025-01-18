@@ -4,6 +4,5 @@ components = [
   "rust-analyzer",
   "clippy",
   "rust-src",
-  "rustc-codegen-cranelift-preview",
 ]
 profile = "default"
