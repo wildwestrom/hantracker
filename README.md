@@ -6,6 +6,16 @@ After you launch the program here's how it works:
 2. You'll see each character and have to say if you know the meaning or not, one by one.
 3. The program then shows you your progress by how many you know.
 
+## Roadmap
+
+Here are some features I'd like to add.
+
+- [ ] A way to save and re-load your progress
+- [ ] Preset lists of characters for testing
+- [ ] In-app font setting, because different countries display Chinese characters differently
+- [ ] A view of the previously answered character to confirm you actually knew the character
+- [ ] A Back button to re-answer a previous question on the test
+
 ## Licenses
 ### Hantracker
 Copyright © 2021 Christian Westrom
