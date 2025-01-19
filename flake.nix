@@ -36,8 +36,9 @@
 
             # GTK
             gtk4
+            libadwaita
+            gdk-pixbuf
             wrapGAppsHook
-            blueprint-compiler
           ];
         };
       }

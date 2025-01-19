@@ -1,0 +1,39 @@
+.test-character {
+  font-size: 72pt;
+}
+
+.m-2 {
+  margin: 0.5rem;
+}
+
+.my-2 {
+  margin: 0 0.5rem;
+}
+
+.mx-2 {
+  margin: 0.5rem 0;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.m-8 {
+  margin: 2rem;
+}
+
+.my-8 {
+  margin: 0 2rem;
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.py-8 {
+  padding: 0 2rem;
+}

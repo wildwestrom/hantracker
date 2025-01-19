@@ -3,7 +3,6 @@ resolver = "2"
 members = ["lib"]
 
 [workspace.package]
-version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 authors = ["Christian Westrom <c.westrom@westrom.xyz>"]
@@ -14,6 +13,7 @@ categories = []
 
 [package]
 name = "hantracker"
+version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
@@ -24,8 +24,8 @@ log = "*"
 anyhow = { workspace = true }
 log = { workspace = true }
 lib = { path = "lib" }
-relm4 = "*"
-gtk-blueprint = { features = ["compiled-map"], git = "https://github.com/wildwestrom/gtk-blueprint" }
+rand = "0.8.5"
+relm4 = { version = "0.9.1", features = ["libadwaita", "gnome_47"] }
 
 [features]
 default = []
