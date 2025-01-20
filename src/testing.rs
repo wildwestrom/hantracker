@@ -119,7 +119,7 @@ impl SimpleComponent for TestingScreen {
 				if let Some(c) = self.chars.get_mut(self.current_char) {
 					c.recalled = recalled;
 					self.current_char += 1;
-					if self.current_char == self.chars.len() - 1 {
+					if self.current_char == self.chars.len() {
 						finish(&self.chars)
 					}
 				} else {
