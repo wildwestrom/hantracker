@@ -30,7 +30,7 @@ impl SimpleComponent for ResultScreen {
 			},
 			gtk::Label {
 				set_css_classes:  &["mb-2"],
-				set_label: "The ones in blue are the ones you don't know yet.",
+				set_label: "The ones in blue are the ones you know.",
 			},
 			gtk::Frame {
 				gtk::ScrolledWindow {
