@@ -66,12 +66,6 @@ impl SimpleComponent for InputScreen {
 		sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
 		let buf = gtk::TextBuffer::new(None);
-		buf.set_text(if cfg!(debug_assertions) {
-			// include_str!("takibi.txt");
-			"以呂波耳本部止"
-		} else {
-			""
-		});
 
 		let text = get_full_text_from_buffer(&buf);
 		let model = Self { buf, text };
