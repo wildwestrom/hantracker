@@ -7,11 +7,11 @@
 }
 
 .my-2 {
-  margin: 0 0.5rem;
+  margin: 0.5rem 0;
 }
 
 .mx-2 {
-  margin: 0.5rem 0;
+  margin: 0 0.5rem;
 }
 
 .mb-2 {
@@ -22,18 +22,46 @@
   margin-top: 0.5rem;
 }
 
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
 .m-8 {
   margin: 2rem;
 }
 
 .my-8 {
+  margin: 2rem 0;
+}
+
+.mx-8 {
   margin: 0 2rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
 }
 
 .p-8 {
   padding: 2rem;
 }
 
+.py-2 {
+  padding: 0.5rem 0;
+}
+
+.px-2 {
+  padding: 0 0.5rem;
+}
+
 .py-8 {
+  padding: 2rem 0;
+}
+
+.px-8 {
   padding: 0 2rem;
 }

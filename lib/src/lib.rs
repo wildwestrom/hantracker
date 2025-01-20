@@ -14,3 +14,18 @@ pub fn is_chinese_character(c: &char) -> bool {
     c >= 0x30000 && c <= 0x3134 || // CJK Unified Ideographs Extension G
     c >= 0x31350 && c <= 0x323A // CJK Unified Ideographs Extension H
 }
+
+pub fn sort_kanji(chars: &mut Vec<char>) {
+	chars.sort();
+}
+
+pub fn vec_string_to_vec_char(one_char_strings: Vec<String>) -> Vec<char> {
+	one_char_strings
+		.into_iter()
+		.map(|s| {
+			let should_be_one_char = s.chars().collect::<Vec<_>>();
+			assert!(should_be_one_char.len() == 1);
+			unsafe { *should_be_one_char.get_unchecked(0) }
+		})
+		.collect()
+}

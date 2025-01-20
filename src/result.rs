@@ -7,10 +7,7 @@ use relm4::prelude::*;
 
 #[derive(Debug)]
 pub struct ResultScreen {
-	tag_table: Rc<gtk::TextTagTable>,
 	buf: gtk::TextBuffer,
-	text: String,
-	known_chars: Vec<char>,
 }
 
 #[component(pub)]
@@ -65,13 +62,7 @@ impl SimpleComponent for ResultScreen {
 	) -> ComponentParts<Self> {
 		let tag_table = Rc::new(gtk::TextTagTable::new());
 		let buf = gtk::TextBuffer::new(Some(&tag_table));
-		let text = get_full_text_from_buffer(&buf);
-		let model = Self {
-			buf,
-			text,
-			known_chars: vec![],
-			tag_table,
-		};
+		let model = Self { buf };
 
 		let widgets = view_output!();
 
@@ -102,11 +93,6 @@ impl SimpleComponent for ResultScreen {
 			}
 		}
 	}
-}
-
-fn get_full_text_from_buffer(buf: &gtk::TextBuffer) -> String {
-	let (start, end) = buf.bounds();
-	buf.text(&start, &end, true).to_string()
 }
 
 #[derive(Debug, Clone)]

@@ -26,5 +26,11 @@ fn main() -> Result<()> {
 	let app = RelmApp::from_app(adw_app);
 	app.run::<window::Ht>(());
 
+	// // Use for cleaning up input data.
+	// let chars = include_str!("common_cn_tier_1.txt");
+	// let mut chars: Vec<char> = chars.chars().filter(lib::is_chinese_character).collect();
+	// chars.dedup();
+	// print!("{}", chars.into_iter().collect::<String>());
+
 	Ok(())
 }

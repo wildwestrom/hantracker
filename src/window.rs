@@ -33,14 +33,16 @@ impl SimpleComponent for Ht {
 			set_mnemonics_visible: false,
 			adw::Clamp {
 				set_css_classes: &["m-8"],
-				set_maximum_size: 800,
-				set_tightening_threshold: 800,
 				set_orientation: gtk::Orientation::Horizontal,
 				set_valign: gtk::Align::Fill,
 				set_halign: gtk::Align::Fill,
+				set_unit: adw::LengthUnit::Px,
+				set_maximum_size: 1920,
+				set_tightening_threshold: 1000,
 
 				#[local_ref]
 				view_stack -> adw::ViewStack {
+					set_hexpand: true,
 					add = model.input_screen.widget(),
 					add = model.testing_screen.widget(),
 					add = model.result_screen.widget(),

@@ -15,6 +15,8 @@ const KANJI_XML_PATH: &str = "resources/kanjidic2.xml.gz";
 
 use hard_xml::XmlRead;
 
+use crate::{sort_kanji, vec_string_to_vec_char};
+
 #[derive(XmlRead, Debug)]
 #[xml(strict(unknown_attribute, unknown_element))]
 #[xml(tag = "kanjidic2")]
@@ -26,15 +28,20 @@ pub struct Dict2 {
 }
 
 impl Dict2 {
-	pub fn get_all_jlpt(&self) -> Vec<String> {
-		self.character
+	pub fn get_all_jlpt(&self) -> Vec<char> {
+		let mut chars: Vec<String> = self
+			.character
 			.iter()
 			.filter(|c| c.misc.jlpt.is_some())
 			.map(|c| c.literal.clone())
-			.collect()
+			.collect();
+		chars.sort();
+		let chars = vec_string_to_vec_char(chars);
+		chars
 	}
-	pub fn get_all_joyo(&self) -> Vec<String> {
-		self.character
+	pub fn get_all_joyo(&self) -> Vec<char> {
+		let mut chars: Vec<String> = self
+			.character
 			.iter()
 			.filter(|c| {
 				c.misc.grade.is_some_and(|g| match g {
@@ -43,7 +50,26 @@ impl Dict2 {
 				})
 			})
 			.map(|c| c.literal.clone())
-			.collect()
+			.collect();
+		chars.sort();
+		let chars = vec_string_to_vec_char(chars);
+		chars
+	}
+	pub fn get_all_kyoiku(&self) -> Vec<char> {
+		let mut chars: Vec<String> = self
+			.character
+			.iter()
+			.filter(|c| {
+				c.misc.grade.is_some_and(|g| match g {
+					1..6 => true,
+					_ => false,
+				})
+			})
+			.map(|c| c.literal.clone())
+			.collect();
+		chars.sort();
+		let chars = vec_string_to_vec_char(chars);
+		chars
 	}
 }
 

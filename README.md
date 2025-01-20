@@ -10,11 +10,12 @@ After you launch the program here's how it works:
 
 Here are some features I'd like to add.
 
+- [x] Preset lists of characters for testing
 - [ ] A way to save and re-load your progress
-- [ ] Preset lists of characters for testing
 - [ ] In-app font setting, because different countries display Chinese characters differently
-- [ ] A view of the previously answered character to confirm you actually knew the character
-- [ ] A Back button to re-answer a previous question on the test
+- [ ] A back button to re-answer a previous question on the test
+  - [ ] A view of the previously answered character to confirm you actually knew the character
+- [ ] Render a wallpaper of your learning progress
 
 ## Licenses
 ### Hantracker

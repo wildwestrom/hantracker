@@ -39,6 +39,7 @@
             libadwaita
             gdk-pixbuf
             wrapGAppsHook
+            gobject-introspection
           ];
         };
       }
