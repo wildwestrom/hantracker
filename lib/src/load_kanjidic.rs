@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::{
 	fs::{self, File},
 	io::{self, BufReader, Read, Write},
