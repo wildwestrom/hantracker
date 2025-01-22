@@ -9,13 +9,15 @@ After you launch the program here's how it works:
 2. You'll see each character and have to say if you know the meaning or not, one by one.
 3. The program then shows you your progress by how many you know.
 
+Note: 
+You must set the proper font for the language you wish to study on your OS. (I tried, but doing this for you was too much work).
+
 ## Roadmap
 
 Here are some features I'd like to add.
 
 - [x] Preset lists of characters for testing
 - [ ] A way to save and re-load your progress
-- [ ] In-app font setting, because different countries display Chinese characters differently
 - [ ] A back button to re-answer a previous question on the test
   - [ ] A view of the previously answered character to confirm you actually knew the character
 - [ ] Render a wallpaper of your learning progress
