@@ -32,7 +32,7 @@ impl SimpleComponent for InputScreen {
 						set_label: "Input Characters",
 					},
 					gtk::Label {
-						set_css_classes:  &["mb-2"],
+						set_css_classes:  &["m-2"],
 						set_label: "These are the characters which you will be tested on:",
 					},
 					gtk::ScrolledWindow {
@@ -55,6 +55,11 @@ impl SimpleComponent for InputScreen {
 								}
 							},
 						},
+					},
+					gtk::Label {
+						set_css_classes:  &["m-2"],
+						#[watch]
+						set_label: &format!("{} Characters", get_full_text_from_buffer(&buf).trim().chars().count()),
 					},
 				},
 				adw::PreferencesGroup {
@@ -95,7 +100,7 @@ impl SimpleComponent for InputScreen {
 						set_css_classes: &["my-2", "py-2", "pill"],
 						set_label: "通用规范汉字表: 一级字表",
 						connect_clicked => {
-							Message::UpdateText(include_str!("common_cn_tier_1.txt").to_string())
+							Message::UpdateText(include_str!("common_cn_tier_1.txt").trim().to_string())
 						},
 					}
 				}
