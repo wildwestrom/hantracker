@@ -1,4 +1,7 @@
 # Hantracker
+
+[![dependency status](https://deps.rs/repo/github/wildwestrom/hantracker/status.svg)](https://deps.rs/repo/github/wildwestrom/hantracker)
+
   Tracks your progress learning Chinese Characters.
 
 After you launch the program here's how it works:
