@@ -1,3 +1,4 @@
+pub mod derive_str;
 pub mod load_kanjidic;
 
 pub fn is_chinese_character(c: &char) -> bool {
