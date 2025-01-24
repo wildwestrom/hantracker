@@ -113,14 +113,11 @@ impl SimpleComponent for Ht {
 					.chars()
 					.filter(is_chinese_character)
 					.collect();
-				// TODO: Make the test me button invisible unless there are characters.
-				if chars.len() > 0 {
-					self.testing_screen
-						.sender()
-						.send(testing_screen::Message::StartTest(chars))
-						.expect("Shouldn't fail");
-					self.view_stack.set_visible_child(testing_screen_widget);
-				}
+				self.testing_screen
+					.sender()
+					.send(testing_screen::Message::StartTest(chars))
+					.expect("Shouldn't fail");
+				self.view_stack.set_visible_child(testing_screen_widget);
 			}
 			Message::MoveToResultsSection(chars) => {
 				let result_screen_widget = self.result_screen.widget();
