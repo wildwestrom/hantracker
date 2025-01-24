@@ -48,7 +48,8 @@ impl SimpleComponent for TestingScreen {
 			if model.current_char > 0 {
 				gtk::Grid {
 					set_column_homogeneous: true,
-					attach[0, 0, 1, 2] = &gtk::Box {
+					set_column_spacing: 16,
+					attach[0, 0, 1, 1] = &gtk::Box {
 						set_css_classes: &["card", "heading", "p-8"],
 						set_orientation: gtk::Orientation::Vertical,
 						gtk::Label {
@@ -67,20 +68,30 @@ impl SimpleComponent for TestingScreen {
 							}
 						}
 					},
-					attach[1, 0, 1, 2] = &gtk::Label {
+					attach[1, 0, 1, 1] = &gtk::Label {
 						set_css_classes: &["card", "text-9xl", "p-8"],
 						#[watch]
 						set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
 					},
-					attach[2, 0, 1, 2] = &gtk::Separator {
+					attach[2, 0, 1, 1] = &gtk::Separator {
 						set_css_classes: &["spacer"],
 					},
 				}
 			} else {
-				gtk::Label {
-					set_css_classes: &["card", "text-9xl", "p-8"],
-					#[watch]
-					set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+				gtk::Grid {
+					set_column_homogeneous: true,
+					set_column_spacing: 16,
+					attach[0, 0, 1, 1] = &gtk::Separator {
+						set_css_classes: &["spacer"],
+					},
+					attach[1, 0, 1, 1] = &gtk::Label {
+						set_css_classes: &["card", "text-9xl", "p-8"],
+						#[watch]
+						set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+					},
+					attach[2, 0, 1, 1] = &gtk::Separator {
+						set_css_classes: &["spacer"],
+					},
 				}
 			},
 			gtk::Box {
