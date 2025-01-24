@@ -50,7 +50,7 @@ impl SimpleComponent for InputScreen {
 								#[watch]
 								set_text: &model.text,
 								connect_end_user_action[sender] => move |buf| {
-									let text = get_full_text_from_buffer(&buf);
+									let text = get_full_text_from_buffer(buf);
 									sender.input(Message::UpdateText(text));
 								}
 							},
@@ -59,7 +59,11 @@ impl SimpleComponent for InputScreen {
 					gtk::Label {
 						set_css_classes:  &["m-2"],
 						#[watch]
-						set_label: &format!("{} Characters", get_full_text_from_buffer(&buf).trim().chars().count()),
+						set_label: &format!("{} Characters", {
+							#[allow(clippy::needless_borrow, reason = "This is a bug in clippy, the type system demands a reference")]
+							let text = get_full_text_from_buffer(&buf);
+							text.trim().chars().count()
+						}),
 					},
 				},
 				adw::PreferencesGroup {
@@ -78,21 +82,21 @@ impl SimpleComponent for InputScreen {
 						set_css_classes: &["my-2", "py-2", "pill"],
 						set_label: "日本語能力試験",
 						connect_clicked => {
-							Message::UpdateText(jlpt.to_owned())
+							Message::UpdateText(jlpt.clone())
 						},
 					},
 					gtk::Button {
 						set_css_classes: &["my-2", "py-2", "pill"],
 						set_label: "常用漢字",
 						connect_clicked => {
-							Message::UpdateText(joyo.to_owned())
+							Message::UpdateText(joyo.clone())
 						},
 					},
 					gtk::Button {
 						set_css_classes: &["my-2", "py-2", "pill"],
 						set_label: "教育漢字",
 						connect_clicked => {
-							Message::UpdateText(kyoiku.to_owned())
+							Message::UpdateText(kyoiku.clone())
 						},
 					},
 					gtk::Button {
@@ -110,7 +114,7 @@ impl SimpleComponent for InputScreen {
 				set_transition_type: gtk::RevealerTransitionType::SlideUp,
 				set_transition_duration: 600,
 				gtk::Button {
-					set_css_classes: &["suggested-action", "pill", "m-8"],
+					set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
 					set_label: "Test me",
 					set_hexpand: false,
 					connect_clicked[sender] => move |_| {
@@ -126,12 +130,8 @@ impl SimpleComponent for InputScreen {
 		widgets: Self::Root,
 		sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
-		let buf = gtk::TextBuffer::new(None);
-
-		let text = get_full_text_from_buffer(&buf);
-
 		let model = Self {
-			text,
+			text: String::new(),
 			dict: bootstrap_dict().unwrap(),
 		};
 

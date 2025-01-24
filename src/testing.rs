@@ -60,12 +60,12 @@ impl SimpleComponent for TestingScreen {
 							set_orientation: gtk::Orientation::Vertical,
 							gtk::Label {
 								set_css_classes: &["heading"],
-								set_label: "Previous Character".into(),
+								set_label: "Previous Character",
 							},
 							gtk::Label {
 								set_css_classes: &["text-5xl"],
 								#[watch]
-								set_label: &model.chars.get(model.current_char.saturating_sub(1)).map(|q| q.char.to_string()).unwrap_or_else(|| "No previous character.".into())
+								set_label: &model.chars.get(model.current_char.saturating_sub(1)).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
 							},
 							gtk::Button {
 								set_css_classes: &[],
@@ -80,7 +80,7 @@ impl SimpleComponent for TestingScreen {
 				gtk::Label {
 					set_css_classes: &["card", "text-9xl", "p-8"],
 					#[watch]
-					set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+					set_label: &model.chars.get(model.current_char).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
 				},
 				gtk::Separator {
 					set_css_classes: &["spacer"],
@@ -147,22 +147,22 @@ impl SimpleComponent for TestingScreen {
 				let finish = |chars: &[Test]| {
 					sender.input(Message::Finish(
 						chars
-							.into_iter()
+							.iter()
 							.filter_map(|c| match c.recalled {
 								Recalled::Known => Some(c.char),
 								Recalled::Unknown => None,
 							})
 							.collect(),
-					))
+					));
 				};
 				if let Some(c) = self.chars.get_mut(self.current_char) {
 					c.recalled = recalled;
 					self.current_char += 1;
 					if self.current_char == self.chars.len() {
-						finish(&self.chars)
+						finish(&self.chars);
 					}
 				} else {
-					finish(&self.chars)
+					finish(&self.chars);
 				};
 			}
 		}

@@ -1,5 +1,3 @@
-use anyhow::Result;
-
 use relm4::adw::prelude::*;
 use relm4::{adw, gtk, prelude::*};
 
@@ -20,7 +18,7 @@ fn load_css() {
 	);
 }
 
-fn main() -> Result<()> {
+fn main() {
 	let adw_app = adw::Application::builder().application_id(APP_ID).build();
 	adw_app.connect_startup(|_| load_css());
 	let app = RelmApp::from_app(adw_app);
@@ -31,6 +29,4 @@ fn main() -> Result<()> {
 	// let mut chars: Vec<char> = chars.chars().filter(lib::is_chinese_character).collect();
 	// chars.dedup();
 	// print!("{}", chars.into_iter().collect::<String>());
-
-	Ok(())
 }
