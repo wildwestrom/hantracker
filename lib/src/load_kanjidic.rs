@@ -1,4 +1,5 @@
-#![allow(unused)]
+#![allow(clippy::needless_late_init, reason = "`XmlRead` macro error")]
+#![allow(unused, reason = "This is temporary")]
 
 use std::{
 	fs::{self, File},
@@ -28,6 +29,7 @@ pub struct Dict2 {
 }
 
 impl Dict2 {
+	#[must_use]
 	pub fn get_all_jlpt(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
@@ -36,40 +38,31 @@ impl Dict2 {
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		let chars = vec_string_to_vec_char(chars);
-		chars
+		vec_string_to_vec_char(chars)
 	}
+
+	#[must_use]
 	pub fn get_all_joyo(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
 			.iter()
-			.filter(|c| {
-				c.misc.grade.is_some_and(|g| match g {
-					1..6 | 8 => true,
-					_ => false,
-				})
-			})
+			.filter(|c| c.misc.grade.is_some_and(|g| matches!(g, 1..6 | 8)))
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		let chars = vec_string_to_vec_char(chars);
-		chars
+		vec_string_to_vec_char(chars)
 	}
+
+	#[must_use]
 	pub fn get_all_kyoiku(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
 			.iter()
-			.filter(|c| {
-				c.misc.grade.is_some_and(|g| match g {
-					1..6 => true,
-					_ => false,
-				})
-			})
+			.filter(|c| c.misc.grade.is_some_and(|g| matches!(g, 1..6)))
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		let chars = vec_string_to_vec_char(chars);
-		chars
+		vec_string_to_vec_char(chars)
 	}
 }
 
@@ -251,6 +244,7 @@ struct Reading {
 	r_value: String,
 }
 
+#[allow(clippy::missing_errors_doc, reason = "Don't care for now")]
 pub fn bootstrap_dict() -> Result<Dict2> {
 	load_kanji_xml_data()?;
 	let file = File::open(KANJI_XML_PATH)?;
@@ -286,13 +280,13 @@ fn load_kanji_xml_data() -> Result<()> {
 				hasher.finalize()
 			};
 			if downloaded_shasum != disk_shasum {
-				file_on_disk.write(&downloaded_bytes)?;
+				file_on_disk.write_all(&downloaded_bytes)?;
 			}
 		}
 	} else {
 		let mut file_on_disk = File::create(KANJI_XML_PATH)?;
 		let downloaded_bytes = download_kanjidic()?;
-		file_on_disk.write(&downloaded_bytes)?;
+		file_on_disk.write_all(&downloaded_bytes)?;
 	}
 	Ok(())
 }

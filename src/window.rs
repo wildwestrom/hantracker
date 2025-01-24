@@ -21,7 +21,7 @@ pub struct Ht {
 #[component(pub)]
 impl SimpleComponent for Ht {
 	type Init = ();
-	type Input = Message;
+	type Input = NextScreen;
 	type Output = ();
 
 	view! {
@@ -60,26 +60,21 @@ impl SimpleComponent for Ht {
 	) -> ComponentParts<Self> {
 		let view_stack = Rc::new(adw::ViewStack::new());
 
-		let input_screen =
-			input_screen::InputScreen::builder()
-				.launch(())
-				.forward(sender.input_sender(), |msg| match msg {
-					string => Message::MoveToTestSection(string),
-				});
+		let input_screen = input_screen::InputScreen::builder()
+			.launch(())
+			.forward(sender.input_sender(), NextScreen::Testing);
 
 		let testing_screen = testing_screen::TestingScreen::builder().launch(()).forward(
 			sender.input_sender(),
 			|msg| match msg {
-				testing_screen::OutputMessage::Finish(chars) => {
-					Message::MoveToResultsSection(chars)
-				}
+				testing_screen::OutputMessage::Finish(chars) => NextScreen::Results(chars),
 			},
 		);
 
 		let result_screen = result_screen::ResultScreen::builder().launch(()).forward(
 			sender.input_sender(),
 			|msg| match msg {
-				result_screen::OutputMessage::StartOver => Message::MoveToInputSection,
+				result_screen::OutputMessage::StartOver => NextScreen::Input,
 			},
 		);
 
@@ -100,11 +95,11 @@ impl SimpleComponent for Ht {
 
 	fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
 		match message {
-			Message::MoveToInputSection => {
+			NextScreen::Input => {
 				let input_screen_widget = self.input_screen.widget();
 				self.view_stack.set_visible_child(input_screen_widget);
 			}
-			Message::MoveToTestSection(text) => {
+			NextScreen::Testing(text) => {
 				self.text_to_test = text;
 				let testing_screen_widget = self.testing_screen.widget();
 				let chars: Vec<_> = self
@@ -118,7 +113,7 @@ impl SimpleComponent for Ht {
 					.expect("Shouldn't fail");
 				self.view_stack.set_visible_child(testing_screen_widget);
 			}
-			Message::MoveToResultsSection(chars) => {
+			NextScreen::Results(chars) => {
 				let result_screen_widget = self.result_screen.widget();
 				self.result_screen
 					.sender()
@@ -134,8 +129,8 @@ impl SimpleComponent for Ht {
 }
 
 #[derive(Debug, Clone)]
-pub enum Message {
-	MoveToInputSection,
-	MoveToTestSection(String),
-	MoveToResultsSection(Vec<char>),
+pub enum NextScreen {
+	Input,
+	Testing(String),
+	Results(Vec<char>),
 }

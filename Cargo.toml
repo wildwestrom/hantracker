@@ -6,19 +6,24 @@ members = ["lib"]
 edition = "2021"
 license = "GPL-3.0-or-later"
 authors = ["Christian Westrom <c.westrom@westrom.xyz>"]
-description = "Tracks your progress learning Chinese characters"
-repository = "TBD"
-keywords = ["graphical"]
-categories = []
+repository = "https://github.com/wildwestrom/hantracker.git"
+keywords = ["language", "study"]
+version = "0.1.0"
+categories = ["gui-application"]
 
 [package]
 name = "hantracker"
-version = "0.1.0"
-edition = "2021"
+description = "Tracks your progress learning Chinese characters"
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [workspace.dependencies]
 anyhow = "1"
-log = "*"
+log = "0"
 
 [dependencies]
 anyhow = { workspace = true }
