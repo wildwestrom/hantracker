@@ -43,6 +43,7 @@ impl SimpleComponent for Ht {
 				#[local_ref]
 				view_stack -> adw::ViewStack {
 					set_hexpand: true,
+					set_hhomogeneous: false,
 					add = model.input_screen.widget(),
 					add = model.testing_screen.widget(),
 					add = model.result_screen.widget(),
