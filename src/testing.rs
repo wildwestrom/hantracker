@@ -45,10 +45,43 @@ impl SimpleComponent for TestingScreen {
 					model.chars.len()
 				),
 			},
-			gtk::Label {
-				set_css_classes: &["card", "test-character", "p-8"],
-				#[watch]
-				set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+			if model.current_char > 0 {
+				gtk::Grid {
+					set_column_homogeneous: true,
+					attach[0, 0, 1, 2] = &gtk::Box {
+						set_css_classes: &["card", "heading", "p-8"],
+						set_orientation: gtk::Orientation::Vertical,
+						gtk::Label {
+							set_label: "Previous Character".into(),
+						},
+						gtk::Label {
+							set_css_classes: &["text-5xl"],
+							#[watch]
+							set_label: &model.chars.get(model.current_char - 1).map(|q| q.char.to_string()).unwrap_or_else(|| "No previous character.".into())
+						},
+						gtk::Button {
+							set_css_classes: &[],
+							set_label: "Go back",
+							connect_clicked => {
+								Message::GoBack
+							}
+						}
+					},
+					attach[1, 0, 1, 2] = &gtk::Label {
+						set_css_classes: &["card", "text-9xl", "p-8"],
+						#[watch]
+						set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+					},
+					attach[2, 0, 1, 2] = &gtk::Separator {
+						set_css_classes: &["spacer"],
+					},
+				}
+			} else {
+				gtk::Label {
+					set_css_classes: &["card", "text-9xl", "p-8"],
+					#[watch]
+					set_label: &model.chars.get(model.current_char).map(|q| q.char.to_string()).unwrap_or_else(|| "Finished!".into())
+				}
 			},
 			gtk::Box {
 				set_css_classes: &["m-8", "linked"],
@@ -104,6 +137,9 @@ impl SimpleComponent for TestingScreen {
 			Message::Finish(known_chars) => sender
 				.output(Message::Finish(known_chars))
 				.expect("sending finished failed"),
+			Message::GoBack => {
+				self.current_char -= 1;
+			}
 			Message::Answer(recalled) => {
 				let finish = |chars: &[Test]| {
 					sender.input(Message::Finish(
@@ -135,4 +171,5 @@ pub enum Message {
 	StartTest(Vec<char>),
 	Finish(Vec<char>),
 	Answer(Recalled),
+	GoBack,
 }
