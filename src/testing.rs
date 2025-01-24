@@ -26,7 +26,7 @@ pub enum Recalled {
 impl SimpleComponent for TestingScreen {
 	type Init = ();
 	type Input = Message;
-	type Output = Message;
+	type Output = OutputMessage;
 
 	view! {
 		#[root]
@@ -138,7 +138,7 @@ impl SimpleComponent for TestingScreen {
 				self.current_char = 0;
 			}
 			Message::Finish(known_chars) => sender
-				.output(Message::Finish(known_chars))
+				.output(OutputMessage::Finish(known_chars))
 				.expect("sending finished failed"),
 			Message::GoBack => {
 				self.current_char -= 1;
@@ -175,4 +175,9 @@ pub enum Message {
 	Finish(Vec<char>),
 	Answer(Recalled),
 	GoBack,
+}
+
+#[derive(Debug, Clone)]
+pub enum OutputMessage {
+	Finish(Vec<char>),
 }
