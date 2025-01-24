@@ -17,9 +17,9 @@ You must set the proper font for the language you wish to study on your OS. (I t
 Here are some features I'd like to add.
 
 - [x] Preset lists of characters for testing
+- [x] A back button to re-answer a previous question on the test
+  - [x] A view of the previously answered character to confirm you actually knew the character
 - [ ] A way to save and re-load your progress
-- [ ] A back button to re-answer a previous question on the test
-  - [ ] A view of the previously answered character to confirm you actually knew the character
 - [ ] Render a wallpaper of your learning progress
 
 ## Licenses

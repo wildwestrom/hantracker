@@ -71,6 +71,7 @@ impl SimpleComponent for Ht {
 				testing_screen::Message::Finish(chars) => Message::MoveToResultsSection(chars),
 				testing_screen::Message::StartTest(..) => unreachable!(),
 				testing_screen::Message::Answer(..) => unreachable!(),
+				testing_screen::Message::GoBack => unreachable!(),
 			},
 		);
 
