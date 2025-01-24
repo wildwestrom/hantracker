@@ -39,7 +39,6 @@ impl SimpleComponent for InputScreen {
 						set_min_content_width: 200,
 						set_min_content_height: 180,
 						set_css_classes: &["mr-2", "card", "view"],
-						// set_hexpand: true,
 						gtk::TextView {
 							set_css_classes: &["m-2"],
 							set_hexpand: true,
@@ -66,7 +65,6 @@ impl SimpleComponent for InputScreen {
 					set_title: "Presets",
 					set_width_request: 320,
 					set_hexpand: false,
-					// set_separate_rows: true,
 					set_css_classes: &["card", "boxed-list-separate", "p-2", "view", "ml-2"],
 					gtk::Button {
 						set_css_classes: &["my-2", "py-2", "pill"],
