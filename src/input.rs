@@ -1,3 +1,4 @@
+use lib::is_chinese_character;
 use lib::load_kanjidic::bootstrap_dict;
 use lib::load_kanjidic::Dict2;
 use relm4::adw::prelude::*;
@@ -103,12 +104,17 @@ impl SimpleComponent for InputScreen {
 					}
 				}
 			},
-			gtk::Button {
-				set_css_classes: &["suggested-action", "pill", "m-8"],
-				set_label: "Test me",
-				set_hexpand: false,
-				connect_clicked[sender] => move |_| {
-					sender.input(Message::MoveToTestSection);
+			gtk::Revealer {
+				#[watch]
+				set_reveal_child: model.text.chars().filter(is_chinese_character).count() > 0,
+				set_transition_type: gtk::RevealerTransitionType::SlideUp,
+				gtk::Button {
+					set_css_classes: &["suggested-action", "pill", "m-8"],
+					set_label: "Test me",
+					set_hexpand: false,
+					connect_clicked[sender] => move |_| {
+						sender.input(Message::MoveToTestSection);
+					}
 				}
 			}
 		}
