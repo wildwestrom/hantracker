@@ -20,7 +20,17 @@ Here are some features I'd like to add.
 - [x] A back button to re-answer a previous question on the test
   - [x] A view of the previously answered character to confirm you actually knew the character
 - [ ] A way to save and re-load your progress
-- [ ] Render a wallpaper of your learning progress
+  - [ ] Start and continue screens
+  - [ ] Know where you last stopped and where to pick up
+
+### Optional Features
+
+- [ ] Have multiple profiles for different lists of characters
+- [ ] Render a wallpaper of your learning progress (inspired by the [Wanikani Screensaver](https://community.wanikani.com/t/wanikani-progress-screensaver-for-osx/1583/109))
+  - [ ] Gnome
+  - [ ] KDE
+  - [ ] MacOS
+  - [ ] Windows
 
 ## Licenses
 ### Hantracker
