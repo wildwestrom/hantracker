@@ -108,6 +108,7 @@ impl SimpleComponent for InputScreen {
 				#[watch]
 				set_reveal_child: model.text.chars().filter(is_chinese_character).count() > 0,
 				set_transition_type: gtk::RevealerTransitionType::SlideUp,
+				set_transition_duration: 600,
 				gtk::Button {
 					set_css_classes: &["suggested-action", "pill", "m-8"],
 					set_label: "Test me",
