@@ -33,6 +33,7 @@ impl SimpleComponent for Ht {
 			set_mnemonics_visible: false,
 			adw::Clamp {
 				set_css_classes: &["m-8"],
+				set_overflow: gtk::Overflow::Visible,
 				set_orientation: gtk::Orientation::Horizontal,
 				set_valign: gtk::Align::Fill,
 				set_halign: gtk::Align::Fill,
@@ -69,18 +70,16 @@ impl SimpleComponent for Ht {
 		let testing_screen = testing_screen::TestingScreen::builder().launch(()).forward(
 			sender.input_sender(),
 			|msg| match msg {
-				testing_screen::Message::Finish(chars) => Message::MoveToResultsSection(chars),
-				testing_screen::Message::StartTest(..) => unreachable!(),
-				testing_screen::Message::Answer(..) => unreachable!(),
-				testing_screen::Message::GoBack => unreachable!(),
+				testing_screen::OutputMessage::Finish(chars) => {
+					Message::MoveToResultsSection(chars)
+				}
 			},
 		);
 
 		let result_screen = result_screen::ResultScreen::builder().launch(()).forward(
 			sender.input_sender(),
 			|msg| match msg {
-				result_screen::Message::StartOver => Message::MoveToInputSection,
-				result_screen::Message::ShowResults(..) => unreachable!(),
+				result_screen::OutputMessage::StartOver => Message::MoveToInputSection,
 			},
 		);
 

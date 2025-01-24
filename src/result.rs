@@ -14,7 +14,7 @@ pub struct ResultScreen {
 impl SimpleComponent for ResultScreen {
 	type Init = ();
 	type Input = Message;
-	type Output = Message;
+	type Output = OutputMessage;
 
 	view! {
 		#[root]
@@ -71,7 +71,7 @@ impl SimpleComponent for ResultScreen {
 
 	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
 		match message {
-			Message::StartOver => sender.output(Message::StartOver).unwrap(),
+			Message::StartOver => sender.output(OutputMessage::StartOver).unwrap(),
 			Message::ShowResults(initial_input, known_chars) => {
 				self.buf.set_text(&initial_input);
 				let known_tag = self
@@ -99,4 +99,9 @@ impl SimpleComponent for ResultScreen {
 pub enum Message {
 	StartOver,
 	ShowResults(String, Vec<char>),
+}
+
+#[derive(Debug, Clone)]
+pub enum OutputMessage {
+	StartOver,
 }
