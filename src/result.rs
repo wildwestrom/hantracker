@@ -31,27 +31,40 @@ impl SimpleComponent for ResultScreen {
 			},
 			gtk::Frame {
 				gtk::ScrolledWindow {
-				set_hexpand: true,
-				set_vexpand: true,
-				gtk::TextView {
-					set_css_classes: &["m-2"],
 					set_hexpand: true,
-					set_wrap_mode: gtk::WrapMode::WordChar,
-					set_editable: false,
-					set_buffer: Some(&model.buf),
-				},
-				set_width_request: 416,
-				set_height_request: 180,
+					set_vexpand: true,
+					set_width_request: 416,
+					set_height_request: 180,
+					gtk::TextView {
+						set_css_classes: &["m-2"],
+						set_hexpand: true,
+						set_wrap_mode: gtk::WrapMode::WordChar,
+						set_editable: false,
+						set_buffer: Some(&model.buf),
+					},
 				}
 			},
-			gtk::Button {
-				set_css_classes: &["suggested-action", "pill", "m-8"],
-				set_label: "Start Over",
-				set_hexpand: false,
-				connect_clicked[sender] => move |_| {
-					sender.input(Message::StartOver);
+			gtk::Box {
+				set_css_classes: &["mt-8"],
+				set_homogeneous: true,
+				gtk::Button {
+					set_css_classes: &["destructive-action", "pill", "mx-2"],
+					set_tooltip: "Your progress will not be saved",
+					set_label: "Start Over",
+					set_hexpand: false,
+					connect_clicked[sender] => move |_| {
+						sender.output(OutputMessage::StartOver).unwrap();
+					}
+				},
+				gtk::Button {
+					set_css_classes: &["suggested-action", "pill", "mx-2"],
+					set_label: "Exit",
+					set_hexpand: false,
+					connect_clicked[sender] => move |_| {
+						sender.output(OutputMessage::Exit).unwrap();
+					}
 				}
-			}
+			},
 		}
 	}
 
@@ -69,9 +82,8 @@ impl SimpleComponent for ResultScreen {
 		ComponentParts { model, widgets }
 	}
 
-	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+	fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
 		match message {
-			Message::StartOver => sender.output(OutputMessage::StartOver).unwrap(),
 			Message::ShowResults(initial_input, known_chars) => {
 				self.buf.set_text(&initial_input);
 				let known_tag = self
@@ -97,11 +109,11 @@ impl SimpleComponent for ResultScreen {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-	StartOver,
 	ShowResults(String, Vec<char>),
 }
 
 #[derive(Debug, Clone)]
 pub enum OutputMessage {
 	StartOver,
+	Exit,
 }

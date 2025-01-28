@@ -6,17 +6,31 @@ use relm4::component;
 use relm4::gtk;
 use relm4::prelude::*;
 
+#[derive(Debug, Clone)]
+pub enum Message {
+	UpdateText(String),
+	NewTest,
+}
+
+#[derive(Debug, Clone)]
+pub enum OutputMessage {
+	ResumeTest,
+	NewTest(String),
+}
+
 #[derive(Debug)]
 pub struct InputScreen {
 	text: String,
+	chinese_character_exists: bool,
 	dict: Dict2,
+	save_exists: bool,
 }
 
 #[component(pub)]
 impl SimpleComponent for InputScreen {
 	type Init = ();
 	type Input = Message;
-	type Output = String;
+	type Output = OutputMessage;
 
 	view! {
 		#[root]
@@ -27,7 +41,7 @@ impl SimpleComponent for InputScreen {
 				set_css_classes: &["card", "p-2"],
 				set_orientation: gtk::Orientation::Horizontal,
 				gtk::Box {
-				set_orientation: gtk::Orientation::Vertical,
+					set_orientation: gtk::Orientation::Vertical,
 					gtk::Label {
 						set_css_classes: &["heading"],
 						set_label: "Input Characters",
@@ -70,37 +84,37 @@ impl SimpleComponent for InputScreen {
 					set_title: "Presets",
 					set_width_request: 320,
 					set_hexpand: false,
-					set_css_classes: &["card", "boxed-list-separate", "p-2", "view", "ml-2"],
+					set_css_classes: &["card", "boxed-list-separate", "p-4", "view", "ml-2"],
 					gtk::Button {
-						set_css_classes: &["my-2", "py-2", "pill"],
+						set_css_classes: &["my-2", "py-2"],
 						set_label: "한문 교육용 기초 한자 1800",
 						connect_clicked => {
 							Message::UpdateText(include_str!("hanmun_hanja_1800.txt").to_string())
 						},
 					},
 					gtk::Button {
-						set_css_classes: &["my-2", "py-2", "pill"],
+						set_css_classes: &["my-2", "py-2"],
 						set_label: "日本語能力試験",
 						connect_clicked => {
 							Message::UpdateText(jlpt.clone())
 						},
 					},
 					gtk::Button {
-						set_css_classes: &["my-2", "py-2", "pill"],
+						set_css_classes: &["my-2", "py-2"],
 						set_label: "常用漢字",
 						connect_clicked => {
 							Message::UpdateText(joyo.clone())
 						},
 					},
 					gtk::Button {
-						set_css_classes: &["my-2", "py-2", "pill"],
+						set_css_classes: &["my-2", "py-2"],
 						set_label: "教育漢字",
 						connect_clicked => {
 							Message::UpdateText(kyoiku.clone())
 						},
 					},
 					gtk::Button {
-						set_css_classes: &["my-2", "py-2", "pill"],
+						set_css_classes: &["my-2", "py-2"],
 						set_label: "通用规范汉字表: 一级字表",
 						connect_clicked => {
 							Message::UpdateText(include_str!("common_cn_tier_1.txt").trim().to_string())
@@ -110,15 +124,47 @@ impl SimpleComponent for InputScreen {
 			},
 			gtk::Revealer {
 				#[watch]
-				set_reveal_child: model.text.chars().filter(is_chinese_character).count() > 0,
-				set_transition_type: gtk::RevealerTransitionType::SlideUp,
-				set_transition_duration: 600,
-				gtk::Button {
-					set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
-					set_label: "Test me",
-					set_hexpand: false,
-					connect_clicked[sender] => move |_| {
-						sender.input(Message::MoveToTestSection);
+				set_reveal_child: model.save_exists || model.chinese_character_exists,
+
+				match (model.save_exists, model.chinese_character_exists) {
+					(true, false) => gtk::Button {
+						set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
+						set_label: "Resume Test",
+						set_hexpand: false,
+						connect_clicked[sender] => move |_| {
+							sender.output(OutputMessage::ResumeTest).expect("This shouldn't fail");
+						}
+					},
+					(true, true) => gtk::Box {
+						set_hexpand: true,
+						set_homogeneous: true,
+						gtk::Button {
+							set_css_classes: &["pill", "mt-8", "mx-8"],
+							set_label: "New Test",
+							set_hexpand: false,
+							connect_clicked[sender] => move |_| {
+								sender.input(Message::NewTest);
+							}
+						},
+						gtk::Button {
+							set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
+							set_label: "Resume Test",
+							set_hexpand: false,
+							connect_clicked[sender] => move |_| {
+								sender.output(OutputMessage::ResumeTest).expect("This shouldn't fail");
+							}
+						},
+					},
+					(false, true) => gtk::Button {
+						set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
+						set_label: "New Test",
+						set_hexpand: false,
+						connect_clicked[sender] => move |_| {
+							sender.input(Message::NewTest);
+						}
+					},
+					(false, false) => gtk::Separator {
+						set_css_classes: &["spacer"],
 					}
 				}
 			}
@@ -132,7 +178,9 @@ impl SimpleComponent for InputScreen {
 	) -> ComponentParts<Self> {
 		let model = Self {
 			text: String::new(),
+			chinese_character_exists: false,
 			dict: bootstrap_dict().unwrap(),
+			save_exists: true,
 		};
 
 		let dict = &model.dict;
@@ -147,8 +195,14 @@ impl SimpleComponent for InputScreen {
 
 	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
 		match message {
-			Message::MoveToTestSection => sender.output(self.text.clone()).expect("Shouldn't fail"),
-			Message::UpdateText(s) => self.text = s,
+			Message::UpdateText(s) => {
+				self.text = s;
+				self.chinese_character_exists =
+					self.text.chars().filter(is_chinese_character).count() > 0;
+			}
+			Message::NewTest => sender
+				.output(OutputMessage::NewTest(self.text.clone()))
+				.expect("Shouldn't fail"),
 		}
 	}
 }
@@ -156,10 +210,4 @@ impl SimpleComponent for InputScreen {
 fn get_full_text_from_buffer(buf: &gtk::TextBuffer) -> String {
 	let (start, end) = buf.bounds();
 	buf.text(&start, &end, true).to_string()
-}
-
-#[derive(Debug, Clone)]
-pub enum Message {
-	MoveToTestSection,
-	UpdateText(String),
 }

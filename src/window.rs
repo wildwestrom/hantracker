@@ -16,6 +16,7 @@ pub struct Ht {
 	input_screen: Controller<input_screen::InputScreen>,
 	testing_screen: Controller<testing_screen::TestingScreen>,
 	result_screen: Controller<result_screen::ResultScreen>,
+	db: Rc,
 }
 
 #[component(pub)]
@@ -26,12 +27,16 @@ impl SimpleComponent for Ht {
 
 	view! {
 		#[root]
-		&adw::Window {
-			set_title: Some(TITLE),
-			set_default_width: 320,
-			set_default_height: 240,
-			set_mnemonics_visible: false,
-			adw::Clamp {
+		adw::Window::builder()
+			.title(TITLE)
+			.default_width(320)
+			.default_height(240)
+			.mnemonics_visible(false)
+			.deletable(true)
+			.resizable(true)
+			.build() {
+			#[wrap(Some)]
+			set_content = &adw::Clamp {
 				set_css_classes: &["m-8"],
 				set_overflow: gtk::Overflow::Visible,
 				set_orientation: gtk::Orientation::Horizontal,
@@ -43,7 +48,6 @@ impl SimpleComponent for Ht {
 
 				#[local_ref]
 				view_stack -> adw::ViewStack {
-					set_hexpand: true,
 					set_hhomogeneous: false,
 					add = model.input_screen.widget(),
 					add = model.testing_screen.widget(),
@@ -60,9 +64,16 @@ impl SimpleComponent for Ht {
 	) -> ComponentParts<Self> {
 		let view_stack = Rc::new(adw::ViewStack::new());
 
-		let input_screen = input_screen::InputScreen::builder()
-			.launch(())
-			.forward(sender.input_sender(), NextScreen::Testing);
+		let input_screen =
+			input_screen::InputScreen::builder()
+				.launch(())
+				.forward(sender.input_sender(), |msg| match msg {
+					input_screen::OutputMessage::ResumeTest => {
+						// todo
+						NextScreen::Testing("string from sql DB".to_string())
+					}
+					input_screen::OutputMessage::NewTest(s) => NextScreen::Testing(s),
+				});
 
 		let testing_screen = testing_screen::TestingScreen::builder().launch(()).forward(
 			sender.input_sender(),
@@ -75,6 +86,7 @@ impl SimpleComponent for Ht {
 			sender.input_sender(),
 			|msg| match msg {
 				result_screen::OutputMessage::StartOver => NextScreen::Input,
+				result_screen::OutputMessage::Exit => NextScreen::Exit,
 			},
 		);
 
@@ -124,6 +136,7 @@ impl SimpleComponent for Ht {
 					.expect("Shouldn't fail");
 				self.view_stack.set_visible_child(result_screen_widget);
 			}
+			NextScreen::Exit => relm4::main_adw_application().quit(),
 		}
 	}
 }
@@ -133,4 +146,5 @@ pub enum NextScreen {
 	Input,
 	Testing(String),
 	Results(Vec<char>),
+	Exit,
 }
