@@ -34,6 +34,7 @@ relm4 = { version = "0.9.1", features = ["libadwaita", "gnome_47"] }
 
 [features]
 default = []
+gnome = []
 
 [profile.dev]
 incremental = true

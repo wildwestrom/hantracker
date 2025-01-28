@@ -47,16 +47,18 @@ impl SimpleComponent for TestingScreen {
 			},
 			gtk::Box {
 				set_homogeneous: true,
-				// set_column_spacing: 16,
+
 				gtk::Revealer {
 					#[watch]
 					set_reveal_child: model.current_char > 0,
 					set_transition_type: gtk::RevealerTransitionType::SwingLeft,
-						gtk::Frame {
-							set_margin_horizontal: 16,
-							set_overflow: gtk::Overflow::Visible,
-							gtk::Box {
+
+					gtk::Frame {
+						set_margin_horizontal: 16,
+						set_overflow: gtk::Overflow::Visible,
+						gtk::Box {
 							set_css_classes: &["p-8"],
+							set_align: gtk::Align::Center,
 							set_orientation: gtk::Orientation::Vertical,
 							gtk::Label {
 								set_css_classes: &["heading"],
@@ -68,7 +70,7 @@ impl SimpleComponent for TestingScreen {
 								set_label: &model.chars.get(model.current_char.saturating_sub(1)).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
 							},
 							gtk::Button {
-								set_css_classes: &[],
+								set_css_classes: &["mt-2"],
 								set_label: "Go back",
 								connect_clicked => {
 									Message::GoBack
@@ -80,7 +82,7 @@ impl SimpleComponent for TestingScreen {
 				gtk::Label {
 					set_css_classes: &["card", "text-9xl", "p-8"],
 					#[watch]
-					set_label: &model.chars.get(model.current_char).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
+					set_label: &model.chars.get(model.current_char).map_or_else(|| "nil".into(), |q| q.char.to_string())
 				},
 				gtk::Separator {
 					set_css_classes: &["spacer"],
@@ -137,9 +139,12 @@ impl SimpleComponent for TestingScreen {
 				self.chars.shuffle(&mut rng);
 				self.current_char = 0;
 			}
-			Message::Finish(known_chars) => sender
-				.output(OutputMessage::Finish(known_chars))
-				.expect("sending finished failed"),
+			Message::Finish(known_chars) => {
+				self.current_char = 0;
+				sender
+					.output(OutputMessage::Finish(known_chars))
+					.expect("sending finished failed")
+			}
 			Message::GoBack => {
 				self.current_char -= 1;
 			}
