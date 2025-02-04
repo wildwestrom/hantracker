@@ -15,6 +15,7 @@ use sha2::{Digest, Sha256};
 const KANJI_XML_PATH: &str = "resources/kanjidic2.xml.gz";
 
 use hard_xml::XmlRead;
+use tracing::debug;
 
 use crate::{sort_kanji, vec_string_to_vec_char};
 
@@ -293,9 +294,9 @@ fn load_kanji_xml_data() -> Result<()> {
 
 fn download_kanjidic() -> Result<Vec<u8>> {
 	let url = "http://www.edrdg.org/kanjidic/kanjidic2.xml.gz";
-	log::info!("Requesting...");
+	debug!("Requesting...");
 	let mut request = reqwest::blocking::get(url)?;
-	log::info!("Request finished!");
+	debug!("Request finished!");
 	let mut buffer = Vec::<u8>::new();
 	io::copy(&mut request, &mut buffer)?;
 	Ok(buffer)

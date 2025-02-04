@@ -5,6 +5,9 @@ use relm4::adw::prelude::*;
 use relm4::component;
 use relm4::gtk;
 use relm4::prelude::*;
+use tracing::debug;
+
+use crate::db::Db;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -15,20 +18,21 @@ pub enum Message {
 #[derive(Debug, Clone)]
 pub enum OutputMessage {
 	ResumeTest,
-	NewTest(String),
+	NewTest,
 }
 
 #[derive(Debug)]
 pub struct InputScreen {
-	text: String,
-	chinese_character_exists: bool,
 	dict: Dict2,
-	save_exists: bool,
+	db: Db,
+	text: String,
+	test_exists: bool,
+	chinese_character_exists: bool,
 }
 
-#[component(pub)]
-impl SimpleComponent for InputScreen {
-	type Init = ();
+#[component(pub, async)]
+impl SimpleAsyncComponent for InputScreen {
+	type Init = Db;
 	type Input = Message;
 	type Output = OutputMessage;
 
@@ -76,12 +80,12 @@ impl SimpleComponent for InputScreen {
 						set_label: &format!("{} Characters", {
 							#[allow(clippy::needless_borrow, reason = "This is a bug in clippy, the type system demands a reference")]
 							let text = get_full_text_from_buffer(&buf);
-							text.trim().chars().count()
+							text.trim().chars().filter(is_chinese_character).count()
 						}),
 					},
 				},
 				adw::PreferencesGroup {
-					set_title: "Presets",
+					set_title: "Presets:",
 					set_width_request: 320,
 					set_hexpand: false,
 					set_css_classes: &["card", "boxed-list-separate", "p-4", "view", "ml-2"],
@@ -124,9 +128,8 @@ impl SimpleComponent for InputScreen {
 			},
 			gtk::Revealer {
 				#[watch]
-				set_reveal_child: model.save_exists || model.chinese_character_exists,
-
-				match (model.save_exists, model.chinese_character_exists) {
+				set_reveal_child: model.test_exists || model.chinese_character_exists,
+				match (model.test_exists, model.chinese_character_exists) {
 					(true, false) => gtk::Button {
 						set_css_classes: &["suggested-action", "pill", "mt-8", "mx-8"],
 						set_label: "Resume Test",
@@ -164,6 +167,8 @@ impl SimpleComponent for InputScreen {
 						}
 					},
 					(false, false) => gtk::Separator {
+						// The condition above should make it so we never touch this branch,
+						// however I couldn't find a way to get rid of it here.
 						set_css_classes: &["spacer"],
 					}
 				}
@@ -171,38 +176,59 @@ impl SimpleComponent for InputScreen {
 		}
 	}
 
-	fn init(
-		_init: Self::Init,
+	async fn init(
+		db: Self::Init,
 		widgets: Self::Root,
-		sender: ComponentSender<Self>,
-	) -> ComponentParts<Self> {
+		sender: AsyncComponentSender<Self>,
+	) -> AsyncComponentParts<Self> {
+		let text = db.get_text().await.expect("query failure");
+
 		let model = Self {
-			text: String::new(),
-			chinese_character_exists: false,
 			dict: bootstrap_dict().unwrap(),
-			save_exists: true,
+			db: db.clone(),
+			text,
+			test_exists: db.test_exists().await.expect("query failed"),
+			chinese_character_exists: db.chinese_character_exists().await.expect("query failed"),
 		};
 
 		let dict = &model.dict;
+
 		let jlpt: String = dict.get_all_jlpt().into_iter().collect();
 		let joyo: String = dict.get_all_joyo().into_iter().collect();
 		let kyoiku: String = dict.get_all_kyoiku().into_iter().collect();
 
 		let widgets = view_output!();
 
-		ComponentParts { model, widgets }
+		AsyncComponentParts { model, widgets }
 	}
 
-	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+	async fn update(&mut self, message: Self::Input, sender: AsyncComponentSender<Self>) {
 		match message {
 			Message::UpdateText(s) => {
+				self.db.set_text(&s).await.expect("insert failed");
+				self.chinese_character_exists = self
+					.db
+					.chinese_character_exists()
+					.await
+					.expect("query failed");
+				debug!(
+					"Text updated: '{}', Chinese characters exist: {}, Is it in the db?: '{}'",
+					s,
+					self.chinese_character_exists,
+					self.db.get_text().await.expect("failed"),
+				);
 				self.text = s;
-				self.chinese_character_exists =
-					self.text.chars().filter(is_chinese_character).count() > 0;
 			}
-			Message::NewTest => sender
-				.output(OutputMessage::NewTest(self.text.clone()))
-				.expect("Shouldn't fail"),
+			Message::NewTest => {
+				// save new test to disk
+				self.db.set_text(&self.text).await.expect("insert failed");
+
+				self.db.create_test_from_raw_text().await.expect("failed");
+
+				sender
+					.output(OutputMessage::NewTest)
+					.expect("Shouldn't fail")
+			}
 		}
 	}
 }
