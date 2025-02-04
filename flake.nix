@@ -34,6 +34,8 @@
             # for reqwest
             openssl
 
+            sqlx-cli
+
             # GTK
             gtk4
             libadwaita
@@ -41,6 +43,7 @@
             wrapGAppsHook
             gobject-introspection
           ];
+          DATABASE_URL = "sqlite://data.sqlite?mode=rwc";
         };
       }
     );

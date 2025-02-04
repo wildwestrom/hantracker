@@ -33,6 +33,20 @@ Here are some features I'd like to add.
   - [ ] MacOS
   - [ ] Windows
 
+## Build instructions
+
+Dependencies are listed in `flake.nix`.
+
+You should be able to run the following to build the project:
+
+```console
+sqlx database create
+sqlx migrate run
+cargo build --release
+```
+
+The name of the database is always `data.sqlite`.
+
 ## Licenses
 
 Copyright © 2021 Christian Westrom

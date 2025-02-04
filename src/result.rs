@@ -10,8 +10,8 @@ pub struct ResultScreen {
 	buf: gtk::TextBuffer,
 }
 
-#[component(pub)]
-impl SimpleComponent for ResultScreen {
+#[component(pub, async)]
+impl SimpleAsyncComponent for ResultScreen {
 	type Init = ();
 	type Input = Message;
 	type Output = OutputMessage;
@@ -68,21 +68,21 @@ impl SimpleComponent for ResultScreen {
 		}
 	}
 
-	fn init(
+	async fn init(
 		_init: Self::Init,
 		widgets: Self::Root,
-		sender: ComponentSender<Self>,
-	) -> ComponentParts<Self> {
+		sender: AsyncComponentSender<Self>,
+	) -> AsyncComponentParts<Self> {
 		let tag_table = Rc::new(gtk::TextTagTable::new());
 		let buf = gtk::TextBuffer::new(Some(&tag_table));
 		let model = Self { buf };
 
 		let widgets = view_output!();
 
-		ComponentParts { model, widgets }
+		AsyncComponentParts { model, widgets }
 	}
 
-	fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+	async fn update(&mut self, message: Self::Input, _sender: AsyncComponentSender<Self>) {
 		match message {
 			Message::ShowResults(initial_input, known_chars) => {
 				self.buf.set_text(&initial_input);

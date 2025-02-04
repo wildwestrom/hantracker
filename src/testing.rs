@@ -3,16 +3,19 @@ use relm4::component;
 use relm4::gtk;
 use relm4::prelude::*;
 
+use crate::db::Db;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Test {
-	char: char,
-	recalled: Recalled,
+pub struct Test {
+	pub(crate) char: char,
+	pub(crate) recalled: Recalled,
 }
 
 #[derive(Debug)]
 pub struct TestingScreen {
-	chars: Vec<Test>,
-	current_char: usize,
+	tests: Vec<Test>,
+	current_test: usize,
+	db: Db,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,9 +25,9 @@ pub enum Recalled {
 	Known,
 }
 
-#[component(pub)]
-impl SimpleComponent for TestingScreen {
-	type Init = ();
+#[component(pub, async)]
+impl SimpleAsyncComponent for TestingScreen {
+	type Init = Db;
 	type Input = Message;
 	type Output = OutputMessage;
 
@@ -41,8 +44,8 @@ impl SimpleComponent for TestingScreen {
 				set_css_classes: &["mb-2"],
 				#[watch]
 				set_label: &format!("Do you know the meaning of this character?\n{} of {}",
-					model.current_char + 1,
-					model.chars.len()
+					model.current_test + 1,
+					model.tests.len()
 				),
 			},
 			gtk::Box {
@@ -50,7 +53,7 @@ impl SimpleComponent for TestingScreen {
 
 				gtk::Revealer {
 					#[watch]
-					set_reveal_child: model.current_char > 0,
+					set_reveal_child: model.current_test > 0,
 					set_transition_type: gtk::RevealerTransitionType::SwingLeft,
 
 					gtk::Frame {
@@ -67,7 +70,7 @@ impl SimpleComponent for TestingScreen {
 							gtk::Label {
 								set_css_classes: &["text-5xl"],
 								#[watch]
-								set_label: &model.chars.get(model.current_char.saturating_sub(1)).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
+								set_label: &model.tests.get(model.current_test.saturating_sub(1)).map_or_else(|| "No previous character.".into(), |q| q.char.to_string())
 							},
 							gtk::Button {
 								set_css_classes: &["mt-2"],
@@ -82,7 +85,7 @@ impl SimpleComponent for TestingScreen {
 				gtk::Label {
 					set_css_classes: &["card", "text-9xl", "p-8"],
 					#[watch]
-					set_label: &model.chars.get(model.current_char).map_or_else(|| "nil".into(), |q| q.char.to_string())
+					set_label: &model.tests.get(model.current_test).map_or_else(|| "nil".into(), |q| q.char.to_string())
 				},
 				gtk::Separator {
 					set_css_classes: &["spacer"],
@@ -108,50 +111,44 @@ impl SimpleComponent for TestingScreen {
 		}
 	}
 
-	fn init(
-		_init: Self::Init,
+	async fn init(
+		db: Self::Init,
 		widgets: Self::Root,
-		_sender: ComponentSender<Self>,
-	) -> ComponentParts<Self> {
+		_sender: AsyncComponentSender<Self>,
+	) -> AsyncComponentParts<Self> {
 		let model = Self {
-			chars: Vec::new(),
-			current_char: 0,
+			tests: Vec::new(),
+			db: db.clone(),
+			current_test: db.get_test_progress().await.expect("query failed") as usize,
 		};
 
 		let widgets = view_output!();
 
-		ComponentParts { model, widgets }
+		AsyncComponentParts { model, widgets }
 	}
 
-	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+	async fn update(&mut self, message: Self::Input, sender: AsyncComponentSender<Self>) {
 		match message {
-			Message::StartTest(chars) => {
-				use rand::seq::SliceRandom;
-				let mut rng = rand::thread_rng();
-				self.chars = chars
-					.into_iter()
-					.map(|c| Test {
-						char: c,
-						recalled: Recalled::Unknown,
-					})
-					.collect::<Vec<_>>();
-				self.chars.dedup();
-				self.chars.shuffle(&mut rng);
-				self.current_char = 0;
+			Message::StartTest(tests) => {
+				self.tests = tests;
 			}
 			Message::Finish(known_chars) => {
-				self.current_char = 0;
+				self.current_test = 0;
 				sender
 					.output(OutputMessage::Finish(known_chars))
 					.expect("sending finished failed")
 			}
 			Message::GoBack => {
-				self.current_char -= 1;
+				self.current_test -= 1;
+				self.db
+					.set_test_progress(self.current_test)
+					.await
+					.expect("failed");
 			}
 			Message::Answer(recalled) => {
-				let finish = |chars: &[Test]| {
+				let finish = |tests: &[Test]| {
 					sender.input(Message::Finish(
-						chars
+						tests
 							.iter()
 							.filter_map(|c| match c.recalled {
 								Recalled::Known => Some(c.char),
@@ -160,14 +157,18 @@ impl SimpleComponent for TestingScreen {
 							.collect(),
 					));
 				};
-				if let Some(c) = self.chars.get_mut(self.current_char) {
+				if let Some(c) = self.tests.get_mut(self.current_test) {
 					c.recalled = recalled;
-					self.current_char += 1;
-					if self.current_char == self.chars.len() {
-						finish(&self.chars);
+					self.current_test += 1;
+					self.db
+						.set_test_progress(self.current_test)
+						.await
+						.expect("failed");
+					if self.current_test == self.tests.len() {
+						finish(&self.tests);
 					}
 				} else {
-					finish(&self.chars);
+					finish(&self.tests);
 				};
 			}
 		}
@@ -176,7 +177,7 @@ impl SimpleComponent for TestingScreen {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-	StartTest(Vec<char>),
+	StartTest(Vec<Test>),
 	Finish(Vec<char>),
 	Answer(Recalled),
 	GoBack,
