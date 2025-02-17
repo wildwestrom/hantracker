@@ -36,24 +36,29 @@ impl SimpleAsyncComponent for Ht {
 			.resizable(true)
 			.build() {
 			#[wrap(Some)]
-			set_content = &adw::Clamp {
-				set_css_classes: &["m-8"],
-				set_overflow: gtk::Overflow::Visible,
-				set_orientation: gtk::Orientation::Horizontal,
-				set_valign: gtk::Align::Fill,
-				set_halign: gtk::Align::Fill,
-				set_unit: adw::LengthUnit::Px,
-				set_maximum_size: 1920,
-				set_tightening_threshold: 1000,
+			set_content = &adw::ToolbarView {
+				// TODO: make it disableable, i.e. when (features == "gnome")
+				add_top_bar = &adw::HeaderBar::builder().build(),
+				#[wrap(Some)]
+				set_content = &adw::Clamp {
+					set_css_classes: &["m-8"],
+					set_overflow: gtk::Overflow::Visible,
+					set_orientation: gtk::Orientation::Horizontal,
+					set_valign: gtk::Align::Fill,
+					set_halign: gtk::Align::Fill,
+					set_unit: adw::LengthUnit::Px,
+					set_maximum_size: 1920,
+					set_tightening_threshold: 1000,
 
-				#[local_ref]
-				view_stack -> adw::ViewStack {
-					set_hhomogeneous: false,
-					add = model.input_screen.widget(),
-					add = model.testing_screen.widget(),
-					add = model.result_screen.widget(),
+					#[local_ref]
+					view_stack -> adw::ViewStack {
+						set_hhomogeneous: false,
+						add = model.input_screen.widget(),
+						add = model.testing_screen.widget(),
+						add = model.result_screen.widget(),
+					},
 				},
-			}
+			},
 		}
 	}
 
