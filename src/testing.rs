@@ -119,7 +119,8 @@ impl SimpleAsyncComponent for TestingScreen {
 		let model = Self {
 			tests: Vec::new(),
 			db: db.clone(),
-			current_test: db.get_test_progress().await.expect("query failed") as usize,
+			current_test: usize::try_from(db.get_test_progress().await.expect("query failed"))
+				.expect("Integer conversion failed"),
 		};
 
 		let widgets = view_output!();
@@ -136,7 +137,7 @@ impl SimpleAsyncComponent for TestingScreen {
 				self.current_test = 0;
 				sender
 					.output(OutputMessage::Finish(known_chars))
-					.expect("sending finished failed")
+					.expect("sending finished failed");
 			}
 			Message::GoBack => {
 				self.current_test -= 1;

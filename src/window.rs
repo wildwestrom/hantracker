@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use lib::is_chinese_character;
 use relm4::{adw, adw::prelude::*, component, gtk, prelude::*};
 
 const TITLE: &str = "漢tracker";
@@ -61,7 +60,7 @@ impl SimpleAsyncComponent for Ht {
 	async fn init(
 		db: Self::Init,
 		widgets: Self::Root,
-		sender: AsyncComponentSender<Ht>,
+		sender: AsyncComponentSender<Self>,
 	) -> AsyncComponentParts<Self> {
 		let view_stack = Rc::new(adw::ViewStack::new());
 
@@ -151,7 +150,7 @@ impl SimpleAsyncComponent for Ht {
 			}
 			NextScreen::Exit => {
 				self.db.clone().set_test_progress(0).await.expect("failed");
-				relm4::main_adw_application().quit()
+				relm4::main_adw_application().quit();
 			}
 		}
 	}

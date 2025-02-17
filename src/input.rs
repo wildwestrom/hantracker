@@ -227,7 +227,7 @@ impl SimpleAsyncComponent for InputScreen {
 
 				sender
 					.output(OutputMessage::NewTest)
-					.expect("Shouldn't fail")
+					.expect("Shouldn't fail");
 			}
 		}
 	}

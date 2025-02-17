@@ -83,19 +83,16 @@ fn main() -> anyhow::Result<()> {
 
 fn db_path_from_project_dir() -> Result<String> {
 	let project_dirs = directories::ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
-		.ok_or(anyhow!("Failed to find project directory"))?;
+		.ok_or_else(|| anyhow!("Failed to find project directory"))?;
 	let mut db_path = project_dirs.data_dir().to_path_buf();
 	if !db_path.try_exists()? {
 		std::fs::create_dir(&db_path)?;
 	}
 	db_path.push("data.sqlite");
-	Ok(db_path
-		.into_os_string()
-		.into_string()
-		.or_else(|os_string| {
-			Err(anyhow!(
-				"Path not a valid unicode string {}",
-				os_string.to_string_lossy()
-			))
-		})?)
+	db_path.into_os_string().into_string().map_err(|os_string| {
+		anyhow!(
+			"Path not a valid unicode string {}",
+			os_string.to_string_lossy()
+		)
+	})
 }

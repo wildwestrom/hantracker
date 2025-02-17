@@ -3,6 +3,8 @@ use lib::is_chinese_character;
 use sqlx::{migrate, query, sqlite::SqliteConnectOptions, SqlitePool};
 use tracing::debug;
 
+use rand::seq::SliceRandom;
+
 use crate::testing::Test;
 
 // const SCHEMA_SQL: &str = include_str!("schema.sql");
@@ -100,9 +102,7 @@ impl Db {
 
 		chars.dedup(); // I'm not sure if this actually makes a difference, but I don't wanna see this bug.
 
-		use rand::seq::SliceRandom;
 		let mut rng = rand::rng();
-
 		chars.shuffle(&mut rng);
 
 		query!(
@@ -119,8 +119,9 @@ impl Db {
 		.execute(&mut *conn)
 		.await?;
 
+		// TODO: This is way too slow, figure out a faster way
 		for c in chars {
-			let c = c as u32;
+			let c = u32::try_from(c)?;
 			// For some reason this value has to "live longer". Not sure what that really means
 			query!(
 				"INSERT INTO user_profile_characters (profile, char, known) VALUES (?, ?, false)",
@@ -140,20 +141,18 @@ impl Db {
 		Ok(text.chars().filter(is_chinese_character).collect())
 	}
 
-	#[must_use]
 	pub async fn chinese_character_exists(&self) -> Result<bool> {
 		let chars = self.get_all_chinese_characters().await?;
 		debug!("{}", chars.len());
-		Ok(chars.len() > 0)
+		Ok(!chars.is_empty())
 	}
 
 	pub async fn get_previous_test(&self) -> Result<Option<Vec<Test>>> {
-		match self.test_exists().await? {
-			false => Ok(None),
-			true => {
-				let chars = self.get_default_profile_chars().await?;
-				Ok(Some(chars))
-			}
+		if self.test_exists().await? {
+			let chars = self.get_default_profile_chars().await?;
+			Ok(Some(chars))
+		} else {
+			Ok(None)
 		}
 	}
 
@@ -168,7 +167,14 @@ impl Db {
 		let chars = records
 			.iter()
 			.map(|record| Test {
+				#[allow(
+					clippy::cast_possible_truncation,
+					clippy::as_conversions,
+					clippy::cast_sign_loss,
+					reason = "I expect every value to be a valid UTF-8 character"
+				)]
 				char: char::from_u32(record.char as u32).expect("should work"),
+				#[allow(clippy::match_bool, reason = "This is fine")]
 				recalled: match record.known {
 					true => crate::testing::Recalled::Known,
 					false => crate::testing::Recalled::Unknown,
@@ -191,7 +197,7 @@ impl Db {
 
 	pub async fn set_test_progress(&self, progress: usize) -> Result<()> {
 		let mut conn = self.pool.acquire().await?;
-		let progress = progress as i64;
+		let progress = i64::try_from(progress)?;
 		// I don't know why the value "doesn't live long enough"
 		// when I just inline it into the query macro... whatever.
 		query!(

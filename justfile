@@ -31,7 +31,8 @@ clippy_args := """
 	-A clippy::mod_module_files \
 	-A clippy::option_if_let_else \
 	-A clippy::missing_trait_methods \
-	-A clippy::used_underscore_binding
+	-A clippy::used_underscore_binding \
+	-A clippy::future_not_send
 	"""
 
 lint-check:
