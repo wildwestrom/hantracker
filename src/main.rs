@@ -86,7 +86,7 @@ fn db_path_from_project_dir() -> Result<String> {
 		.ok_or_else(|| anyhow!("Failed to find project directory"))?;
 	let mut db_path = project_dirs.data_dir().to_path_buf();
 	if !db_path.try_exists()? {
-		std::fs::create_dir(&db_path)?;
+		std::fs::create_dir_all(&db_path)?;
 	}
 	db_path.push("data.sqlite");
 	db_path.into_os_string().into_string().map_err(|os_string| {
