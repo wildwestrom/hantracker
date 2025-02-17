@@ -20,9 +20,13 @@ Here are some features I'd like to add.
 - [x] Preset lists of characters for testing
 - [x] A back button to re-answer a previous question on the test
   - [x] A view of the previously answered character to confirm you actually knew the character
-- [ ] A way to save and re-load your progress
-  - [ ] Start and continue screens
-  - [ ] Know where you last stopped and where to pick up
+- [x] A way to save and re-load your progress
+  - [x] ~~Start and continue screens~~ Buttons to either start a new test or resume a previous one
+  - [x] Know where you last stopped and where to pick up
+- [ ] Get working on multiple platforms
+  - [x] Linux
+  - [ ] MacOS
+  - [ ] Windows
 
 ### Optional Features
 
