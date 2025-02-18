@@ -222,7 +222,7 @@ impl SimpleAsyncComponent for InputScreen {
 			Message::NewTest => {
 				// save new test to disk
 				self.db.set_text(&self.text).await.expect("insert failed");
-
+				self.db.set_test_progress(0).await.expect("failed");
 				self.db.create_test_from_raw_text().await.expect("failed");
 
 				sender
