@@ -21,10 +21,16 @@ Here are some features I'd like to add.
 - [x] A back button to re-answer a previous question on the test
   - [x] A view of the previously answered character to confirm you actually knew the character
 - [x] A way to save and re-load your progress
-  - [x] ~~Start and continue screens~~ Buttons to either start a new test or resume a previous one
+  - [x] ~Start and continue screens~ Buttons to either start a new test or resume a previous one
   - [x] Know where you last stopped and where to pick up
-- [ ] Get working on multiple platforms
+- [x] ~Get working~ Compileable on multiple platforms
   - [x] Linux
+  - [x] MacOS
+  - [x] Windows
+- [ ] Show information about the previous character to confirm you actually knew it
+  - [ ] Make the meanings and readings match the target language (Chinese, Japanese, Korean)
+- [ ] Build artifacts with CI
+  - [ ] Linux
   - [ ] MacOS
   - [ ] Windows
 
@@ -36,6 +42,10 @@ Here are some features I'd like to add.
   - [ ] KDE
   - [ ] MacOS
   - [ ] Windows
+
+### Optional Code Quality Stuff
+
+- [ ] Proper error handling (it all got messed up since adding sqlx)
 
 ## Build instructions
 
