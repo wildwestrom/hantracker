@@ -2,19 +2,19 @@
 #![allow(unused, reason = "This is temporary")]
 
 use std::{
-	fs::{self, File},
+	fs::{self, File, OpenOptions},
 	io::{self, BufReader, Read, Write},
 };
 
 const FORCE_INVALIDATE_CACHE: bool = false;
 
-use anyhow::Result;
 use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
 
 const KANJI_XML_PATH: &str = "resources/kanjidic2.xml.gz";
 
 use hard_xml::XmlRead;
+use thiserror::Error;
 use tracing::debug;
 
 use crate::{sort_kanji, vec_string_to_vec_char};
@@ -245,15 +245,45 @@ struct Reading {
 	r_value: String,
 }
 
+#[derive(Debug, Error, Default)]
+pub enum Error {
+	#[error("Io operation `{operation}` failed")]
+	Io {
+		source: io::Error,
+		operation: String,
+	},
+	#[error("Failed to handle xml")]
+	Xml(#[from] hard_xml::XmlError),
+	#[error("Failed to calculate time")]
+	Time(#[from] std::time::SystemTimeError),
+	#[error("Failed to calculate time")]
+	Network(#[from] reqwest::Error),
+
+	#[error("unknown error")]
+	#[default]
+	Unknown,
+}
+
+impl Error {
+	fn from_io(op: &str) -> (impl FnOnce(io::Error) -> Self + use<'_>) {
+		|e: io::Error| Self::Io {
+			source: e,
+			operation: op.to_owned(),
+		}
+	}
+}
+
 #[allow(clippy::missing_errors_doc, reason = "Don't care for now")]
-pub fn bootstrap_dict() -> Result<Dict2> {
+pub fn bootstrap_dict() -> Result<Dict2, Error> {
 	load_kanji_xml_data()?;
-	let file = File::open(KANJI_XML_PATH)?;
+	let file = File::open(KANJI_XML_PATH).map_err(Error::from_io("open"))?;
 	let mut decoded = GzDecoder::new(file);
 
 	let string = {
 		let mut s = String::new();
-		decoded.read_to_string(&mut s)?;
+		decoded
+			.read_to_string(&mut s)
+			.map_err(Error::from_io("read"))?;
 		s
 	};
 
@@ -261,12 +291,20 @@ pub fn bootstrap_dict() -> Result<Dict2> {
 	Ok(dicc)
 }
 
-fn load_kanji_xml_data() -> Result<()> {
-	fs::create_dir_all("resources")?;
-	if fs::exists(KANJI_XML_PATH)? {
-		let mut file_on_disk = File::open(KANJI_XML_PATH)?;
+fn load_kanji_xml_data() -> Result<(), Error> {
+	fs::create_dir_all("resources").map_err(Error::from_io("create_dir_all"))?;
+	if fs::exists(KANJI_XML_PATH).map_err(Error::from_io("check if exists"))? {
+		let mut file_on_disk = OpenOptions::new()
+			.write(true)
+			.read(true)
+			.open(KANJI_XML_PATH)
+			.map_err(Error::from_io("open"))?;
 		let file_is_old = {
-			let modified_date = file_on_disk.metadata()?.modified()?;
+			let modified_date = file_on_disk
+				.metadata()
+				.map_err(Error::from_io("read metadata"))?
+				.modified()
+				.map_err(Error::from_io("read modified time"))?;
 			let now = std::time::SystemTime::now();
 			let diff = now.duration_since(modified_date)?;
 			diff >= std::time::Duration::from_secs(60 * 60 * 24 * 60 /*60 days*/)
@@ -277,27 +315,32 @@ fn load_kanji_xml_data() -> Result<()> {
 			let disk_shasum = {
 				let mut hasher = Sha256::new();
 				let mut filereader = BufReader::new(&file_on_disk);
-				io::copy(&mut filereader, &mut hasher)?;
+				io::copy(&mut filereader, &mut hasher).map_err(Error::from_io("copy"))?;
 				hasher.finalize()
 			};
 			if downloaded_shasum != disk_shasum {
-				file_on_disk.write_all(&downloaded_bytes)?;
+				file_on_disk
+					.write_all(&downloaded_bytes)
+					.map_err(Error::from_io("write if shasums aren't equal"))?;
 			}
 		}
 	} else {
-		let mut file_on_disk = File::create(KANJI_XML_PATH)?;
+		let mut file_on_disk =
+			File::create(KANJI_XML_PATH).map_err(Error::from_io("create file"))?;
 		let downloaded_bytes = download_kanjidic()?;
-		file_on_disk.write_all(&downloaded_bytes)?;
+		file_on_disk
+			.write_all(&downloaded_bytes)
+			.map_err(Error::from_io("write if file doesn't exist"))?;
 	}
 	Ok(())
 }
 
-fn download_kanjidic() -> Result<Vec<u8>> {
+fn download_kanjidic() -> Result<Vec<u8>, Error> {
 	let url = "http://www.edrdg.org/kanjidic/kanjidic2.xml.gz";
 	debug!("Requesting...");
 	let mut request = reqwest::blocking::get(url)?;
 	debug!("Request finished!");
 	let mut buffer = Vec::<u8>::new();
-	io::copy(&mut request, &mut buffer)?;
+	io::copy(&mut request, &mut buffer).map_err(Error::from_io("copy"))?;
 	Ok(buffer)
 }

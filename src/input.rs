@@ -184,7 +184,7 @@ impl SimpleAsyncComponent for InputScreen {
 		let text = db.get_text().await.expect("query failure");
 
 		let model = Self {
-			dict: bootstrap_dict().unwrap(),
+			dict: bootstrap_dict().expect("failed to bootstrap dictionary"),
 			db: db.clone(),
 			text,
 			test_exists: db.test_exists().await.expect("query failed"),

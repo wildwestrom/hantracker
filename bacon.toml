@@ -52,20 +52,24 @@ command = ["cargo", "doc", "--color", "always", "--no-deps", "--open"]
 need_stdout = false
 on_success = "back"                                                    # so that we don't open the browser at each change
 
-# You can run your application and have the result displayed in bacon,
-# *if* it makes sense for this crate.
-# Don't forget the `--color always` part or the errors won't be
-# properly parsed.
-# If your program never stops (eg a server), you may set `background`
-# to false to have the cargo run output immediately displayed instead
-# of waiting for program's end.
 [jobs.run]
 command = [
   "cargo",
   "run",
   "--color",
   "always",
-  # put launch parameters for your program behind a `--` separator
+]
+need_stdout = true
+allow_warnings = true
+background = true
+
+[jobs.rrun]
+command = [
+  "cargo",
+  "run",
+  "--release",
+  "--color",
+  "always",
 ]
 need_stdout = true
 allow_warnings = true

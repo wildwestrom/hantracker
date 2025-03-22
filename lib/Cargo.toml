@@ -14,9 +14,9 @@ categories.workspace = true
 crate-type = ["rlib", "dylib"]
 
 [dependencies]
-anyhow = { workspace = true }
 tracing = { workspace = true }
 reqwest = { version = "0.12", features = ["blocking"] }
 sha2 = "0.10"
 flate2 = "1"
 hard-xml = "1"
+thiserror = "2"
