@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use lib::is_chinese_character;
 use lib::load_kanjidic::bootstrap_dict;
 use lib::load_kanjidic::Dict2;
@@ -8,6 +11,7 @@ use relm4::prelude::*;
 use tracing::debug;
 
 use crate::db::Db;
+use crate::testing::Test;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -18,7 +22,7 @@ pub enum Message {
 #[derive(Debug, Clone)]
 pub enum OutputMessage {
 	ResumeTest,
-	NewTest,
+	NewTest(Vec<Test>),
 }
 
 #[derive(Debug)]
@@ -32,7 +36,7 @@ pub struct InputScreen {
 
 #[component(pub, async)]
 impl SimpleAsyncComponent for InputScreen {
-	type Init = Db;
+	type Init = (Db, Arc<PathBuf>);
 	type Input = Message;
 	type Output = OutputMessage;
 
@@ -177,14 +181,16 @@ impl SimpleAsyncComponent for InputScreen {
 	}
 
 	async fn init(
-		db: Self::Init,
+		init: Self::Init,
 		widgets: Self::Root,
 		sender: AsyncComponentSender<Self>,
 	) -> AsyncComponentParts<Self> {
+		let db = init.0;
+		let data_dir = init.1;
 		let text = db.get_text().await.expect("query failure");
 
 		let model = Self {
-			dict: bootstrap_dict().expect("failed to bootstrap dictionary"),
+			dict: bootstrap_dict(data_dir.to_path_buf()).expect("failed to bootstrap dictionary"),
 			db: db.clone(),
 			text,
 			test_exists: db.test_exists().await.expect("query failed"),
@@ -224,10 +230,15 @@ impl SimpleAsyncComponent for InputScreen {
 				self.db.set_text(&self.text).await.expect("insert failed");
 				self.db.set_test_progress(0).await.expect("failed");
 				self.db.create_test_from_raw_text().await.expect("failed");
+				let test = self
+					.db
+					.get_previous_test()
+					.await
+					.expect("failed")
+					.expect("should exist");
+				self.db.create_test_from_raw_text().await.expect("failed");
 
-				sender
-					.output(OutputMessage::NewTest)
-					.expect("Shouldn't fail");
+				sender.output_sender().emit(OutputMessage::NewTest(test));
 			}
 		}
 	}

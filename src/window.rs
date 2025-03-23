@@ -1,10 +1,13 @@
+use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use relm4::{adw, adw::prelude::*, component, gtk, prelude::*};
 
 const TITLE: &str = "漢tracker";
 
 use crate::db::Db;
+use crate::testing::Test;
 
 use super::input as input_screen;
 use super::result as result_screen;
@@ -21,7 +24,7 @@ pub struct Ht {
 
 #[component(pub, async)]
 impl SimpleAsyncComponent for Ht {
-	type Init = Db;
+	type Init = (Db, Arc<PathBuf>);
 	type Input = NextScreen;
 	type Output = ();
 
@@ -63,17 +66,17 @@ impl SimpleAsyncComponent for Ht {
 	}
 
 	async fn init(
-		db: Self::Init,
+		(db, project_dirs): Self::Init,
 		widgets: Self::Root,
 		sender: AsyncComponentSender<Self>,
 	) -> AsyncComponentParts<Self> {
 		let view_stack = Rc::new(adw::ViewStack::new());
 
 		let input_screen = input_screen::InputScreen::builder()
-			.launch(db.clone())
+			.launch((db.clone(), project_dirs))
 			.forward(sender.input_sender(), move |msg| match msg {
 				input_screen::OutputMessage::ResumeTest => NextScreen::ResumeTest,
-				input_screen::OutputMessage::NewTest => NextScreen::NewTest,
+				input_screen::OutputMessage::NewTest(test) => NextScreen::NewTest(test),
 			});
 
 		let testing_screen = testing_screen::TestingScreen::builder()
@@ -113,15 +116,8 @@ impl SimpleAsyncComponent for Ht {
 				let input_screen_widget = self.input_screen.widget();
 				self.view_stack.set_visible_child(input_screen_widget);
 			}
-			NextScreen::NewTest => {
+			NextScreen::NewTest(test) => {
 				let testing_screen_widget = self.testing_screen.widget();
-				self.db.create_test_from_raw_text().await.expect("failed");
-				let test = self
-					.db
-					.get_previous_test()
-					.await
-					.expect("failed")
-					.expect("should exist");
 				self.testing_screen
 					.sender()
 					.send(testing_screen::Message::StartTest(test))
@@ -164,7 +160,7 @@ impl SimpleAsyncComponent for Ht {
 #[derive(Debug, Clone)]
 pub enum NextScreen {
 	Input,
-	NewTest,
+	NewTest(Vec<Test>),
 	ResumeTest,
 	Results(Vec<char>),
 	Exit,

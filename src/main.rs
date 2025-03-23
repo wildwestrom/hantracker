@@ -1,3 +1,6 @@
+use std::path::Path;
+use std::sync::Arc;
+
 use anyhow::anyhow;
 use anyhow::Result;
 use constcat::concat;
@@ -47,7 +50,12 @@ fn main() -> anyhow::Result<()> {
 
 	tracing::subscriber::set_global_default(subscriber)?;
 
-	let path_from_project_dir = db_path_from_project_dir()?;
+	let project_dirs = directories::ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
+		.ok_or_else(|| anyhow!("Failed to find project directory"))?;
+	let data_dir = project_dirs.data_dir();
+	let data_dir = Arc::new(data_dir.to_owned());
+
+	let path_from_project_dir = db_path_from_data_dir(&data_dir)?;
 
 	let db_path = match std::env::var("DATABASE_URL") {
 		Ok(path) => path,
@@ -70,21 +78,19 @@ fn main() -> anyhow::Result<()> {
 
 	// open a new database
 	let db = rt.block_on(async { Db::new(&db_path).await })?;
-	info!("Created new db at {:?}", db_path);
+	info!("Connected to database at {:?}", db_path);
 
 	let adw_app = adw::Application::builder().application_id(APP_ID).build();
 	adw_app.connect_startup(|_| load_css());
 	let app = RelmApp::from_app(adw_app);
 
-	app.run_async::<window::Ht>(db);
+	app.run_async::<window::Ht>((db, data_dir));
 
 	Ok(())
 }
 
-fn db_path_from_project_dir() -> Result<String> {
-	let project_dirs = directories::ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
-		.ok_or_else(|| anyhow!("Failed to find project directory"))?;
-	let mut db_path = project_dirs.data_dir().to_path_buf();
+fn db_path_from_data_dir(data_dir: &Path) -> Result<String> {
+	let mut db_path = data_dir.to_path_buf();
 	if !db_path.try_exists()? {
 		std::fs::create_dir_all(&db_path)?;
 	}

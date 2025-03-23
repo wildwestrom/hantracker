@@ -863,7 +863,7 @@ dependencies = [
 
 [[package]]
 name = "hantracker"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "anyhow",
  "constcat",
@@ -1260,7 +1260,7 @@ dependencies = [
 
 [[package]]
 name = "lib"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "flate2",
  "hard-xml",

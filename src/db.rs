@@ -1,6 +1,6 @@
 use anyhow::Result;
 use lib::is_chinese_character;
-use sqlx::{migrate, query, sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{migrate, query, sqlite::SqliteConnectOptions, QueryBuilder, SqlitePool};
 use tracing::debug;
 
 use rand::seq::SliceRandom;
@@ -119,18 +119,14 @@ impl Db {
 		.execute(&mut *conn)
 		.await?;
 
-		// TODO: This is way too slow, figure out a faster way
-		for c in chars {
-			let c = u32::try_from(c)?;
-			// For some reason this value has to "live longer". Not sure what that really means
-			query!(
-				"INSERT INTO user_profile_characters (profile, char, known) VALUES (?, ?, false)",
-				DEFAULT_PROFILE_ID,
-				c,
-			)
-			.execute(&mut *conn)
-			.await?;
-		}
+		let mut query_builder: QueryBuilder<sqlx::Sqlite> =
+			QueryBuilder::new("INSERT INTO user_profile_characters (profile, char, known)");
+		query_builder.push_values(chars, |mut row, c| {
+			row.push_bind(DEFAULT_PROFILE_ID)
+				.push_bind(u32::try_from(c).expect("conversion failed"))
+				.push_bind(false);
+		});
+		query_builder.build().execute(&mut *conn).await?;
 
 		Ok(())
 	}

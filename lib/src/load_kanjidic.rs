@@ -4,6 +4,8 @@
 use std::{
 	fs::{self, File, OpenOptions},
 	io::{self, BufReader, Read, Write},
+	path::{Path, PathBuf},
+	sync::OnceLock,
 };
 
 const FORCE_INVALIDATE_CACHE: bool = false;
@@ -11,11 +13,13 @@ const FORCE_INVALIDATE_CACHE: bool = false;
 use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
 
-const KANJI_XML_PATH: &str = "resources/kanjidic2.xml.gz";
+const QUALIFIER: &str = "xyz";
+const ORGANIZATION: &str = "westrom";
+const APPLICATION: &str = "hantracker";
 
 use hard_xml::XmlRead;
 use thiserror::Error;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::{sort_kanji, vec_string_to_vec_char};
 
@@ -258,6 +262,8 @@ pub enum Error {
 	Time(#[from] std::time::SystemTimeError),
 	#[error("Failed to calculate time")]
 	Network(#[from] reqwest::Error),
+	#[error("Project directory not found")]
+	ProjectDir,
 
 	#[error("unknown error")]
 	#[default]
@@ -274,9 +280,18 @@ impl Error {
 }
 
 #[allow(clippy::missing_errors_doc, reason = "Don't care for now")]
-pub fn bootstrap_dict() -> Result<Dict2, Error> {
-	load_kanji_xml_data()?;
-	let file = File::open(KANJI_XML_PATH).map_err(Error::from_io("open"))?;
+pub fn bootstrap_dict(data_dir: PathBuf) -> Result<Dict2, Error> {
+	let mut xml_data_path = data_dir;
+	if !xml_data_path
+		.try_exists()
+		.map_err(Error::from_io("check if exists"))?
+	{
+		std::fs::create_dir_all(&xml_data_path)
+			.map_err(Error::from_io("create all directories"))?;
+	}
+	xml_data_path.push("kanjidic2.xml.gz");
+	load_kanji_xml_data(&xml_data_path)?;
+	let file = File::open(xml_data_path).map_err(Error::from_io("open"))?;
 	let mut decoded = GzDecoder::new(file);
 
 	let string = {
@@ -291,13 +306,14 @@ pub fn bootstrap_dict() -> Result<Dict2, Error> {
 	Ok(dicc)
 }
 
-fn load_kanji_xml_data() -> Result<(), Error> {
+fn load_kanji_xml_data(xml_data_path: impl Into<PathBuf>) -> Result<(), Error> {
 	fs::create_dir_all("resources").map_err(Error::from_io("create_dir_all"))?;
-	if fs::exists(KANJI_XML_PATH).map_err(Error::from_io("check if exists"))? {
+	let xml_data_path = &xml_data_path.into();
+	if fs::exists(xml_data_path).map_err(Error::from_io("check if exists"))? {
 		let mut file_on_disk = OpenOptions::new()
 			.write(true)
 			.read(true)
-			.open(KANJI_XML_PATH)
+			.open(xml_data_path)
 			.map_err(Error::from_io("open"))?;
 		let file_is_old = {
 			let modified_date = file_on_disk
@@ -326,7 +342,7 @@ fn load_kanji_xml_data() -> Result<(), Error> {
 		}
 	} else {
 		let mut file_on_disk =
-			File::create(KANJI_XML_PATH).map_err(Error::from_io("create file"))?;
+			File::create(xml_data_path).map_err(Error::from_io("create file"))?;
 		let downloaded_bytes = download_kanjidic()?;
 		file_on_disk
 			.write_all(&downloaded_bytes)
@@ -339,8 +355,16 @@ fn download_kanjidic() -> Result<Vec<u8>, Error> {
 	let url = "http://www.edrdg.org/kanjidic/kanjidic2.xml.gz";
 	debug!("Requesting...");
 	let mut request = reqwest::blocking::get(url)?;
+	let mut buffer: Vec<u8>;
+	if let Some(resp_len) = request.content_length() {
+		if let Ok(len) = usize::try_from(resp_len) {
+			buffer = Vec::with_capacity(len);
+		} else {
+			warn!("failed to convert {}_u64 to usize", resp_len)
+		}
+	}
 	debug!("Request finished!");
-	let mut buffer = Vec::<u8>::new();
+	buffer = Vec::new();
 	io::copy(&mut request, &mut buffer).map_err(Error::from_io("copy"))?;
 	Ok(buffer)
 }
