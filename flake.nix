@@ -16,10 +16,14 @@
       system:
       let
         overlays = [ (import rust-overlay) ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
-        rust-toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        pkgs = nixpkgs.legacyPackages.${system}.extend (
+          final: prev: {
+            rustPkgs = import nixpkgs {
+              inherit system overlays;
+            };
+          }
+        );
+        rust-toolchain = pkgs.rustPkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in
       {
         devShells.default = pkgs.mkShell {
