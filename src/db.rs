@@ -123,7 +123,7 @@ impl Db {
 			QueryBuilder::new("INSERT INTO user_profile_characters (profile, char, known)");
 		query_builder.push_values(chars, |mut row, c| {
 			row.push_bind(DEFAULT_PROFILE_ID)
-				.push_bind(u32::try_from(c).expect("conversion failed"))
+				.push_bind(u32::from(c))
 				.push_bind(false);
 		});
 		query_builder.build().execute(&mut *conn).await?;
