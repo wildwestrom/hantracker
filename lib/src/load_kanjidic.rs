@@ -360,7 +360,7 @@ fn download_kanjidic() -> Result<Vec<u8>, Error> {
 		if let Ok(len) = usize::try_from(resp_len) {
 			buffer = Vec::with_capacity(len);
 		} else {
-			warn!("failed to convert {}_u64 to usize", resp_len)
+			warn!("failed to convert {}_u64 to usize", resp_len);
 		}
 	}
 	debug!("Request finished!");
