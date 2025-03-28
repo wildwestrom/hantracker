@@ -53,24 +53,13 @@ need_stdout = false
 on_success = "back"                                                    # so that we don't open the browser at each change
 
 [jobs.run]
-command = [
-  "cargo",
-  "run",
-  "--color",
-  "always",
-]
+command = ["cargo", "run", "--color", "always"]
 need_stdout = true
 allow_warnings = true
 background = true
 
 [jobs.rrun]
-command = [
-  "cargo",
-  "run",
-  "--release",
-  "--color",
-  "always",
-]
+command = ["cargo", "run", "--release", "--color", "always"]
 need_stdout = true
 allow_warnings = true
 background = true
