@@ -21,8 +21,12 @@ pub struct Db {
 impl Db {
 	pub async fn new(url: &str) -> Result<Self> {
 		debug!("attempt connection with database at {url}");
+		let pool = Self::create_pool(url).await?;
+		Self::validate_database(&pool).await?;
+		Ok(Self { pool })
+	}
 
-		// Set connection options BEFORE creating the pool
+	async fn create_pool(url: &str) -> Result<SqlitePool> {
 		let options = SqliteConnectOptions::new()
 			.create_if_missing(true)
 			.foreign_keys(true)
@@ -30,17 +34,13 @@ impl Db {
 			.filename(url);
 
 		debug!("Attempting to open database file at: {:?}", url);
-
-		// Use the options when creating the pool
 		let pool = SqlitePool::connect_with(options).await?;
-
-		// Add this section to run migrations
 		migrate!().run(&pool).await?;
+		Ok(pool)
+	}
 
-		debug!("Current directory: {:?}", std::env::current_dir()?);
-
+	async fn validate_database(pool: &SqlitePool) -> Result<()> {
 		if cfg!(debug_assertions) {
-			// Check what tables exist
 			let mut conn = pool.acquire().await?;
 			let tables = query!("SELECT name FROM sqlite_master WHERE type='table'")
 				.fetch_all(&mut *conn)
@@ -50,13 +50,12 @@ impl Db {
 
 			if !tables
 				.into_iter()
-				.any(|t| t.name.expect("table doesn't have a name") == "user_profile")
+				.any(|t| t.name.is_some_and(|name| name == "user_profile"))
 			{
 				return Err(anyhow::anyhow!("user_profile table does not exist - did migrations run on the correct database file?"));
 			}
 		}
-
-		Ok(Self { pool })
+		Ok(())
 	}
 
 	pub async fn test_exists(&self) -> Result<bool> {
@@ -162,21 +161,25 @@ impl Db {
 		.await?;
 		let chars = records
 			.iter()
-			.map(|record| Test {
-				#[allow(
-					clippy::cast_possible_truncation,
-					clippy::as_conversions,
-					clippy::cast_sign_loss,
-					reason = "I expect every value to be a valid UTF-8 character"
-				)]
-				char: char::from_u32(record.char as u32).expect("should work"),
-				#[allow(clippy::match_bool, reason = "This is fine")]
-				recalled: match record.known {
-					true => crate::testing::Recalled::Known,
-					false => crate::testing::Recalled::Unknown,
-				},
+			.map(|record| -> Result<Test, anyhow::Error> {
+				Ok(Test {
+					#[allow(
+						clippy::cast_possible_truncation,
+						clippy::cast_sign_loss,
+						clippy::as_conversions,
+						reason = "I expect every value to be a valid UTF-8 character"
+					)]
+					char: char::from_u32(record.char as u32).ok_or_else(|| {
+						anyhow::anyhow!("Invalid character code: {}", record.char)
+					})?,
+					#[allow(clippy::match_bool, reason = "This is fine")]
+					recalled: match record.known {
+						true => crate::testing::Recalled::Known,
+						false => crate::testing::Recalled::Unknown,
+					},
+				})
 			})
-			.collect();
+			.collect::<Result<Vec<Test>, _>>()?;
 		Ok(chars)
 	}
 
