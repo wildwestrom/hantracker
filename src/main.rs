@@ -1,13 +1,12 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use constcat::concat;
 use db::Db;
 use relm4::adw::prelude::*;
 use relm4::{adw, gtk, prelude::*};
-use tracing::info;
+use tracing::{error, info};
 use tracing::warn;
 
 mod db;
@@ -21,15 +20,25 @@ const ORGANIZATION: &str = "westrom";
 const APPLICATION: &str = "hantracker";
 const APP_ID: &str = concat!(QUALIFIER, ".", ORGANIZATION, ".", APPLICATION);
 
-fn load_css() {
+fn load_css() -> Result<()> {
+	let css_path = "ui/main.css";
+	if !std::path::Path::new(css_path).exists() {
+		return Err(anyhow!("CSS file not found at {}", css_path));
+	}
+
 	let css_provider = gtk::CssProvider::new();
-	css_provider.load_from_path("ui/main.css");
+	css_provider.load_from_path(css_path);
+
+	let display = gtk::gdk::Display::default()
+		.with_context(|| "Failed to get default display. Is a display server running?")?;
 
 	gtk::style_context_add_provider_for_display(
-		&gtk::gdk::Display::default().expect("Could not connect to display"),
+		&display,
 		&css_provider,
 		gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
 	);
+
+	Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -81,7 +90,11 @@ fn main() -> anyhow::Result<()> {
 	info!("Connected to database at {:?}", db_path);
 
 	let adw_app = adw::Application::builder().application_id(APP_ID).build();
-	adw_app.connect_startup(|_| load_css());
+	adw_app.connect_startup(|_| {
+		if let Err(e) = load_css() {
+			error!("Failed to load CSS: {}", e);
+		}
+	});
 	let app = RelmApp::from_app(adw_app);
 
 	app.run_async::<window::Ht>((db, data_dir));
