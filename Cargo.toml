@@ -33,11 +33,11 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 lib = { path = "lib" }
-rand = "0.9.0"
+rand = "0.9.1"
 relm4 = { version = "0.9.1", features = ["libadwaita", "gnome_47"] }
 directories = { workspace = true }
 constcat = { workspace = true }
-sqlx = { version = "0.8.3", features = ["runtime-tokio", "sqlite"] }
+sqlx = { version = "0.8.5", features = ["runtime-tokio", "sqlite"] }
 
 [features]
 default = []
