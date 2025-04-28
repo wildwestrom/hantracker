@@ -53,7 +53,7 @@ impl SimpleAsyncComponent for ResultScreen {
 					set_label: "Start Over",
 					set_hexpand: false,
 					connect_clicked[sender] => move |_| {
-						sender.output(OutputMessage::StartOver).unwrap();
+						sender.output(OutputMessage::StartOver).expect("Shouldn't fail");
 					}
 				},
 				gtk::Button {
@@ -61,7 +61,7 @@ impl SimpleAsyncComponent for ResultScreen {
 					set_label: "Exit",
 					set_hexpand: false,
 					connect_clicked[sender] => move |_| {
-						sender.output(OutputMessage::Exit).unwrap();
+						sender.output(OutputMessage::Exit).expect("Shouldn't fail");
 					}
 				}
 			},
@@ -89,7 +89,7 @@ impl SimpleAsyncComponent for ResultScreen {
 				let known_tag = self
 					.buf
 					.create_tag(None, &[("foreground", &"blue")])
-					.unwrap();
+					.expect("fails if property doesn't exist or is not writeable");
 				for cjk_c in known_chars {
 					let mut txt_iter = self.buf.start_iter();
 					let end_iter = self.buf.end_iter();

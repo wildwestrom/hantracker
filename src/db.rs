@@ -50,7 +50,7 @@ impl Db {
 
 			if !tables
 				.into_iter()
-				.any(|t| t.name.unwrap() == "user_profile")
+				.any(|t| t.name.expect("table doesn't have a name") == "user_profile")
 			{
 				return Err(anyhow::anyhow!("user_profile table does not exist - did migrations run on the correct database file?"));
 			}

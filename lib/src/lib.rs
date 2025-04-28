@@ -35,7 +35,7 @@ pub fn vec_string_to_vec_char(one_char_strings: Vec<String>) -> Vec<char> {
 				should_be_one_char.len() == 1,
 				"The caller is responsible for making sure they only pass 1 character strings"
 			);
-			*should_be_one_char.first().unwrap()
+			*should_be_one_char.first().expect("The compiler can't guarantee there's always one character per string, but it should always be the case")
 		})
 		.collect()
 }
