@@ -125,7 +125,7 @@ impl SimpleAsyncComponent for InputScreen {
 						set_css_classes: &["my-2", "py-2"],
 						set_label: "通用规范汉字表: 一级字表",
 						connect_clicked => {
-							Message::UpdateText(include_str!("common_cn_tier_1.txt").trim().to_string())
+							Message::UpdateText(include_str!("common_cn_tier_1.txt").to_string())
 						},
 					}
 				}
