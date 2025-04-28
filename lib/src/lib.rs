@@ -3,7 +3,7 @@ pub mod load_kanjidic;
 
 #[must_use]
 pub const fn is_chinese_character(c: &char) -> bool {
-	#[allow(clippy::as_conversions, reason = "I doubt this will fail")]
+	#[allow(clippy::as_conversions, reason = "Every character is a valid u32")]
 	let c = *c as u32;
 	c >= 0x3400 && c <= 0x4DBF || // CJK Unified Ideographs Extension A
 	c >= 0x4E00 && c <= 0x9FFF || // CJK Unified Ideographs
@@ -22,20 +22,24 @@ pub fn sort_kanji(chars: &mut [char]) {
 	chars.sort_unstable();
 }
 
-/// # Panics
+#[derive(Debug, thiserror::Error)]
+#[error("String '{0}' does not contain exactly one character")]
+pub struct StringToCharError(String);
+
+/// # Errors
 ///
-/// TODO: Somehow make the type system assert that these strings are in fact one character strings.
-#[must_use]
-pub fn vec_string_to_vec_char(one_char_strings: Vec<String>) -> Vec<char> {
+/// Returns an error if any of the strings in the input vector do not contain exactly one character.
+pub fn vec_string_to_vec_char(
+	one_char_strings: Vec<String>,
+) -> Result<Vec<char>, StringToCharError> {
 	one_char_strings
 		.into_iter()
 		.map(|s| {
-			let should_be_one_char = s.chars().collect::<Vec<_>>();
-			assert!(
-				should_be_one_char.len() == 1,
-				"The caller is responsible for making sure they only pass 1 character strings"
-			);
-			*should_be_one_char.first().expect("The compiler can't guarantee there's always one character per string, but it should always be the case")
+			let mut chars = s.chars();
+			match (chars.next(), chars.next()) {
+				(Some(c), None) => Ok(c),
+				_ => Err(StringToCharError(s)),
+			}
 		})
 		.collect()
 }

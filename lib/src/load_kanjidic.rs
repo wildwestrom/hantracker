@@ -35,6 +35,10 @@ pub struct Dict2 {
 
 impl Dict2 {
 	#[must_use]
+	#[allow(
+		clippy::missing_panics_doc,
+		reason = "I'm guaranteeing all strings are single characters"
+	)]
 	pub fn get_all_jlpt(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
@@ -43,10 +47,14 @@ impl Dict2 {
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		vec_string_to_vec_char(chars)
+		vec_string_to_vec_char(chars).expect("all strings were not single characters")
 	}
 
 	#[must_use]
+	#[allow(
+		clippy::missing_panics_doc,
+		reason = "I'm guaranteeing all strings are single characters"
+	)]
 	pub fn get_all_joyo(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
@@ -55,10 +63,14 @@ impl Dict2 {
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		vec_string_to_vec_char(chars)
+		vec_string_to_vec_char(chars).expect("all strings were not single characters")
 	}
 
 	#[must_use]
+	#[allow(
+		clippy::missing_panics_doc,
+		reason = "I'm guaranteeing all strings are single characters"
+	)]
 	pub fn get_all_kyoiku(&self) -> Vec<char> {
 		let mut chars: Vec<String> = self
 			.character
@@ -67,7 +79,7 @@ impl Dict2 {
 			.map(|c| c.literal.clone())
 			.collect();
 		chars.sort();
-		vec_string_to_vec_char(chars)
+		vec_string_to_vec_char(chars).expect("all strings were not single characters")
 	}
 }
 

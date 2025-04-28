@@ -170,7 +170,7 @@ impl SimpleAsyncComponent for TestingScreen {
 					}
 				} else {
 					finish(&self.tests);
-				};
+				}
 			}
 		}
 	}
