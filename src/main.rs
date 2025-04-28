@@ -42,8 +42,6 @@ fn load_css() -> Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
-	// why current thread? idk, I think we don't need multi threading so maybe smaller binary size?
-	// TODO: perf test
 	let rt = relm4::tokio::runtime::Builder::new_current_thread()
 		.enable_time()
 		.build()?;
