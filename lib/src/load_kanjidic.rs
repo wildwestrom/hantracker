@@ -6,11 +6,13 @@ use std::{
 	io::{self, BufReader, Read, Write},
 	path::{Path, PathBuf},
 	sync::OnceLock,
+	time::Duration,
 };
 
 const FORCE_INVALIDATE_CACHE: bool = false;
 
 use flate2::read::GzDecoder;
+use reqwest::{Client, Method, Response, Url};
 use sha2::{Digest, Sha256};
 
 const QUALIFIER: &str = "xyz";
@@ -293,65 +295,42 @@ impl Error {
 
 #[allow(clippy::missing_errors_doc, reason = "Don't care for now")]
 pub fn bootstrap_dict(data_dir: PathBuf) -> Result<Dict2, Error> {
-	let mut xml_data_path = data_dir;
-	if !xml_data_path
+	if !data_dir
 		.try_exists()
 		.map_err(Error::from_io("check if exists"))?
 	{
-		std::fs::create_dir_all(&xml_data_path)
-			.map_err(Error::from_io("create all directories"))?;
+		std::fs::create_dir_all(&data_dir).map_err(Error::from_io("create all directories"))?;
 	}
+
+	let mut xml_data_path = data_dir;
 	xml_data_path.push("kanjidic2.xml.gz");
+
 	load_kanji_xml_data(&xml_data_path)?;
-	let file = File::open(xml_data_path).map_err(Error::from_io("open"))?;
-	let mut decoded = GzDecoder::new(file);
+	let xml_file = File::open(xml_data_path).map_err(Error::from_io("open"))?;
 
-	let string = {
-		let mut s = String::new();
-		decoded
-			.read_to_string(&mut s)
-			.map_err(Error::from_io("read"))?;
-		s
-	};
-
-	let dicc = Dict2::from_str(&string)?;
+	let dicc = Dict2::from_str(&gzipped_file_to_string(xml_file)?)?;
 	Ok(dicc)
 }
 
+fn gzipped_file_to_string(xml_file: impl Read) -> Result<String, Error> {
+	let mut decoded = GzDecoder::new(xml_file);
+	let mut s = String::new();
+	decoded
+		.read_to_string(&mut s)
+		.map_err(Error::from_io("read to string"))?;
+	Ok(s)
+}
+
 fn load_kanji_xml_data(xml_data_path: impl Into<PathBuf>) -> Result<(), Error> {
-	fs::create_dir_all("resources").map_err(Error::from_io("create_dir_all"))?;
 	let xml_data_path = &xml_data_path.into();
-	if fs::exists(xml_data_path).map_err(Error::from_io("check if exists"))? {
+	let xml_data_exists = fs::exists(xml_data_path).map_err(Error::from_io("check if exists"))?;
+	if xml_data_exists {
 		let mut file_on_disk = OpenOptions::new()
 			.write(true)
 			.read(true)
 			.open(xml_data_path)
-			.map_err(Error::from_io("open"))?;
-		let file_is_old = {
-			let modified_date = file_on_disk
-				.metadata()
-				.map_err(Error::from_io("read metadata"))?
-				.modified()
-				.map_err(Error::from_io("read modified time"))?;
-			let now = std::time::SystemTime::now();
-			let diff = now.duration_since(modified_date)?;
-			diff >= std::time::Duration::from_secs(60 * 60 * 24 * 60 /*60 days*/)
-		};
-		if file_is_old || FORCE_INVALIDATE_CACHE {
-			let downloaded_bytes = download_kanjidic()?;
-			let downloaded_shasum = Sha256::digest(&downloaded_bytes);
-			let disk_shasum = {
-				let mut hasher = Sha256::new();
-				let mut filereader = BufReader::new(&file_on_disk);
-				io::copy(&mut filereader, &mut hasher).map_err(Error::from_io("copy"))?;
-				hasher.finalize()
-			};
-			if downloaded_shasum != disk_shasum {
-				file_on_disk
-					.write_all(&downloaded_bytes)
-					.map_err(Error::from_io("write if shasums aren't equal"))?;
-			}
-		}
+			.map_err(Error::from_io("open file on disk"))?;
+		download_kanjidic_cached(file_on_disk)?;
 	} else {
 		let mut file_on_disk =
 			File::create(xml_data_path).map_err(Error::from_io("create file"))?;
@@ -363,20 +342,73 @@ fn load_kanji_xml_data(xml_data_path: impl Into<PathBuf>) -> Result<(), Error> {
 	Ok(())
 }
 
+fn download_kanjidic_cached(mut file_on_disk: File) -> Result<(), Error> {
+	if file_is_old(&file_on_disk)? || FORCE_INVALIDATE_CACHE {
+		let downloaded_bytes = download_kanjidic()?;
+		if !hashes_match(&file_on_disk, &downloaded_bytes)? {
+			file_on_disk
+				.write_all(&downloaded_bytes)
+				.map_err(Error::from_io("write if shasums aren't equal"))?;
+		}
+	}
+	Ok(())
+}
+
+fn file_is_old(file_on_disk: &File) -> Result<bool, Error> {
+	let file_is_old = {
+		let modified_date = file_on_disk
+			.metadata()
+			.map_err(Error::from_io("read metadata"))?
+			.modified()
+			.map_err(Error::from_io("read modified time"))?;
+		let now = std::time::SystemTime::now();
+		let diff = now.duration_since(modified_date)?;
+		diff >= std::time::Duration::from_secs(60 * 60 * 24 * 60 /*60 days*/)
+	};
+	Ok(file_is_old)
+}
+
+fn hashes_match(file_on_disk: &File, downloaded_bytes: &Vec<u8>) -> Result<bool, Error> {
+	let downloaded_shasum = Sha256::digest(downloaded_bytes);
+	let disk_shasum = {
+		let mut hasher = Sha256::new();
+		let mut filereader = BufReader::new(file_on_disk);
+		io::copy(&mut filereader, &mut hasher).map_err(Error::from_io("copy"))?;
+		hasher.finalize()
+	};
+	Ok(downloaded_shasum == disk_shasum)
+}
+
 fn download_kanjidic() -> Result<Vec<u8>, Error> {
 	let url = "http://www.edrdg.org/kanjidic/kanjidic2.xml.gz";
 	debug!("Requesting...");
-	let mut request = reqwest::blocking::get(url)?;
+	let client = reqwest::blocking::ClientBuilder::new()
+		.connect_timeout(Duration::from_secs(5))
+		.build()?;
+	let request = client.get(url).build()?;
+	let mut resp = client.execute(request)?;
+
+	let mut buffer = response_data_to_buffer(&resp);
+	let bytes_read = resp
+		.read_to_end(&mut buffer)
+		.map_err(Error::from_io("read network stream"))?;
+	debug!("Successfully read {bytes_read}");
+	Ok(buffer)
+}
+
+fn response_data_to_buffer(resp: &reqwest::blocking::Response) -> Vec<u8> {
 	let mut buffer: Vec<u8>;
-	if let Some(resp_len) = request.content_length() {
+	if let Some(resp_len) = resp.content_length() {
+		debug!("Found content length.");
 		if let Ok(len) = usize::try_from(resp_len) {
 			buffer = Vec::with_capacity(len);
 		} else {
 			warn!("failed to convert {}_u64 to usize", resp_len);
+			buffer = Vec::new();
 		}
+	} else {
+		buffer = Vec::new();
 	}
 	debug!("Request finished!");
-	buffer = Vec::new();
-	io::copy(&mut request, &mut buffer).map_err(Error::from_io("copy"))?;
-	Ok(buffer)
+	buffer
 }
