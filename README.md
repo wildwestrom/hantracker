@@ -10,9 +10,6 @@ After you launch the program here's how it works:
 2. You'll see each character and have to say if you know the meaning or not, one by one.
 3. The program then shows you your progress by how many you know.
 
-Note:
-You must set the proper font for the language you wish to study on your OS. (I tried, but doing this for you was too much work).
-
 ## Roadmap
 
 Here are some features I'd like to add.
@@ -60,6 +57,14 @@ cargo build --release
 ```
 
 The name of the database is always `data.sqlite`.
+
+## Known issues
+
+### Doesn't really test you
+Right now the program tests you using the "honor system". That is, when you see a character, you have to be honest and judge whether you know its meaning or not.
+
+### Saving and restoring don't quite work
+There are some intermittent bugs around saving and restoring the state of the program. To be honest, it's been very difficult for me to track down.
 
 ## Licenses
 
